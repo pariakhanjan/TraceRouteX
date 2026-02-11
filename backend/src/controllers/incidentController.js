@@ -259,69 +259,143 @@ export const getIncidentUpdates = async (req, res) => {
     }
 };
 
-// حل کردن رخداد (resolve)
+/**
+ * Resolve incident
+ * PATCH /api/incidents/:id/resolve
+ * Access: engineer, admin
+ */
 export const resolveIncident = async (req, res) => {
-    const { id } = req.params;
-    const { root_cause, prevention_notes } = req.body;
-
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
+        const { id } = req.params;
+        const { root_cause, prevention_notes } = req.body;
 
-        // به‌روزرسانی وضعیت رخداد
-        const incidentResult = await client.query(
-            `UPDATE incidents 
-             SET status = 'resolved',
-                 resolved_by = $1,
-                 resolved_at = NOW(),
-                 root_cause = $2,
-                 prevention_notes = $3
-             WHERE id = $4
-             RETURNING *`,
-            [req.user.id, root_cause, prevention_notes, id]
+        // چک وجود رخداد
+        const incident = await pool.query(
+            'SELECT * FROM incidents WHERE id = $1',
+            [id]
         );
 
-        if (incidentResult.rows.length === 0) {
-            await client.query('ROLLBACK');
+        if (incident.rows.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'رخداد یافت نشد'
             });
         }
 
-        const incident = incidentResult.rows[0];
+        const incidentData = incident.rows[0];
 
-        // بازگرداندن وضعیت سرویس به حالت عادی
-        await client.query(
-            `UPDATE services SET status = 'up' WHERE id = $1`,
-            [incident.service_id]
+        if (incidentData.status === 'resolved') {
+            return res.status(400).json({
+                success: false,
+                message: 'این رخداد قبلاً حل شده است'
+            });
+        }
+
+        // ✅ حل کردن رخداد
+        const result = await pool.query(
+            `UPDATE incidents 
+             SET status = 'resolved',
+                 resolved_by = $1,
+                 resolved_at = NOW(),
+                 root_cause = $2,
+                 prevention_notes = $3,
+                 updated_at = NOW()
+             WHERE id = $4
+             RETURNING *`,
+            [req.user.id, root_cause || null, prevention_notes || null, id]
         );
 
-        // ثبت update پایانی
-        await client.query(
-            `INSERT INTO incident_updates (incident_id, message, created_by)
-             VALUES ($1, $2, $3)`,
-            [id, 'رخداد حل شد و سرویس به حالت عادی بازگشت', req.user.id]
+        const resolvedIncident = result.rows[0];
+
+        // ✅ بروزرسانی وضعیت Service به 'up'
+        await pool.query(
+            `UPDATE services
+             SET status = 'up',
+                 updated_at = NOW()
+             WHERE id = $1`,
+            [resolvedIncident.service_id]
         );
 
-        await logAction(req.user.id, 'resolve_incident', 'incident', id);
-
-        await client.query('COMMIT');
+        // Bonus: audit log
+        try {
+            await pool.query(
+                `INSERT INTO audit_logs (actor_id, action, entity_type, entity_id)
+                 VALUES ($1, $2, $3, $4)`,
+                [req.user.id, 'resolve_incident', 'incident', id]
+            );
+        } catch (auditError) {
+            console.error('Audit log error:', auditError.message);
+        }
 
         res.json({
             success: true,
-            message: 'رخداد با موفقیت حل شد',
-            data: incident
+            message: 'رخداد با موفقیت حل شد و وضعیت سرویس به حالت عادی برگشت',
+            data: resolvedIncident
         });
+
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('خطا در حل رخداد:', error);
+        console.error('Resolve incident error:', error);
         res.status(500).json({
             success: false,
-            message: 'خطا در حل رخداد'
+            message: 'خطا در حل کردن رخداد'
         });
-    } finally {
-        client.release();
     }
 };
+
+/**
+ * Toggle incident publish status
+ * PATCH /api/incidents/:id/publish
+ * Access: admin only
+ */
+export const togglePublish = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { is_published } = req.body;
+
+        // بررسی نقش - فقط admin
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'فقط ادمین می‌تواند وضعیت انتشار را تغییر دهد'
+            });
+        }
+
+        // Validation
+        if (typeof is_published !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                message: 'مقدار is_published باید true یا false باشد'
+            });
+        }
+
+        const result = await pool.query(
+            `UPDATE incidents 
+             SET is_published = $1, 
+                 updated_at = NOW()
+             WHERE id = $2
+             RETURNING *`,
+            [is_published, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'رخداد یافت نشد'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: is_published ? 'رخداد منتشر شد' : 'رخداد از حالت انتشار خارج شد',
+            data: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Toggle publish error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'خطا در تغییر وضعیت انتشار'
+        });
+    }
+};
+

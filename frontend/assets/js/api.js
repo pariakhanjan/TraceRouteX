@@ -5,7 +5,7 @@
 const API = {
   // Base URL (empty for now, will use Backend later)
   baseURL: 'http://localhost:3000/api',
-  useMockData: true, // Until Backend is ready
+  useMockData: false, // Until Backend is ready
 
   // Mock Data
   mockData: {
