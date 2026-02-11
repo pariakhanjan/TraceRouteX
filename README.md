@@ -47,8 +47,11 @@ npm run dev
 - **Admin:** admin@traceroutex.com / admin123
 
 ## 📝 API Endpoints
-مستندات کامل API در فایل \`API.md\` موجود است.
+مستندات کاسمل API در فایل \`API.md\` موجود است.
 
 ## 👨‍💻 توسعه‌دهندگان
 - پریا خان جان
 - مهتا رنجبر دامغانی
+
+## 👨‍💻 تست های پست من
+- https://pariakhanjan-5002732.postman.co/workspace/Paria's-Workspace~4efd5aba-9084-44ed-8275-2c877b61a6d7/collection/50437959-2fb475c3-2838-4296-9b3c-190a5d4b5064?action=share&creator=50437959
