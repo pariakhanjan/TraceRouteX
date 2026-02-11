@@ -203,37 +203,72 @@ const API = {
     if (this.useMockData) {
       await this.delay();
       const newService = {
-        id: String(this.mockData.services.length + 1),
+        id: this.mockData.services.length + 1,
         ...serviceData,
-        status: 'operational',
-        uptime_percentage: 100,
+        uptime_percentage: 100.0,
         response_time_avg: 0,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       this.mockData.services.push(newService);
-      return { service: newService };
+      return { service: newService, message: 'Service created successfully' };
     }
-    // Backend endpoint: POST /api/services (admin only)
-    return this.request('/services', {
-      method: 'POST',
-      body: JSON.stringify(serviceData)
-    });
+    return this.request('/services', 'POST', serviceData);
   },
+  // async createService(serviceData) {
+  //   if (this.useMockData) {
+  //     await this.delay();
+  //     const newService = {
+  //       id: String(this.mockData.services.length + 1),
+  //       ...serviceData,
+  //       status: 'operational',
+  //       uptime_percentage: 100,
+  //       response_time_avg: 0,
+  //       created_at: new Date().toISOString()
+  //     };
+  //     this.mockData.services.push(newService);
+  //     return { service: newService };
+  //   }
+  //   // Backend endpoint: POST /api/services (admin only)
+  //   return this.request('/services', {
+  //     method: 'POST',
+  //     body: JSON.stringify(serviceData)
+  //   });
+  // },
 
   async updateService(id, serviceData) {
     if (this.useMockData) {
       await this.delay();
       const index = this.mockData.services.findIndex(s => s.id === id);
-      if (index === -1) throw new Error('Service not found');
-      this.mockData.services[index] = { ...this.mockData.services[index], ...serviceData };
-      return { service: this.mockData.services[index] };
+      if (index === -1) {
+        throw new Error('Service not found');
+      }
+      this.mockData.services[index] = {
+        ...this.mockData.services[index],
+        ...serviceData,
+        updated_at: new Date().toISOString()
+      };
+      return { 
+        service: this.mockData.services[index], 
+        message: 'Service updated successfully' 
+      };
     }
-    // Backend endpoint: PUT /api/services/:id
-    return this.request(`/services/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(serviceData)
-    });
+    return this.request(`/services/${id}`, 'PUT', serviceData);
   },
+  // async updateService(id, serviceData) {
+  //   if (this.useMockData) {
+  //     await this.delay();
+  //     const index = this.mockData.services.findIndex(s => s.id === id);
+  //     if (index === -1) throw new Error('Service not found');
+  //     this.mockData.services[index] = { ...this.mockData.services[index], ...serviceData };
+  //     return { service: this.mockData.services[index] };
+  //   }
+  //   // Backend endpoint: PUT /api/services/:id
+  //   return this.request(`/services/${id}`, {
+  //     method: 'PUT',
+  //     body: JSON.stringify(serviceData)
+  //   });
+  // },
 
   async updateServiceStatus(id, status) {
     if (this.useMockData) {
