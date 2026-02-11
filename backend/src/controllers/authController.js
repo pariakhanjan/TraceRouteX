@@ -9,15 +9,48 @@ const generateToken = (id) => {
     });
 };
 
+/**
+ * Register new user
+ * POST /api/auth/register
+ */
 export const register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, role } = req.body;
 
         // Validation
         if (!username || !email || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'All fields are required.'
+                message: 'Username, email, and password are required.'
+            });
+        }
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email format.'
+            });
+        }
+
+        // Password strength validation (minimum 6 characters)
+        if (password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be at least 6 characters long.'
+            });
+        }
+
+        // ✅ FIX: نقش پیش‌فرض 'viewer' (مطابق ENUM دیتابیس)
+        const userRole = role || 'viewer';
+
+        // Validate role against allowed values
+        const allowedRoles = ['viewer', 'engineer', 'admin'];
+        if (!allowedRoles.includes(userRole)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid role. Must be one of: ${allowedRoles.join(', ')}`
             });
         }
 
@@ -28,24 +61,36 @@ export const register = async (req, res) => {
         );
 
         if (existingUser.rows.length > 0) {
-            return res.status(400).json({
+            return res.status(409).json({
                 success: false,
-                message: 'User already exists.'
+                message: 'User with this email or username already exists.'
             });
         }
 
         // هش کردن پسورد
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // ثبت کاربر (نقش پیش‌فرض: user)
+        // ثبت کاربر با نقش صحیح
         const result = await pool.query(
             `INSERT INTO users (username, email, password_hash, role) 
-       VALUES ($1, $2, $3, 'user') 
-       RETURNING id, username, email, role`,
-            [username, email, hashedPassword]
+             VALUES ($1, $2, $3, $4) 
+             RETURNING id, username, email, role, created_at`,
+            [username, email, hashedPassword || username, userRole]
         );
 
         const user = result.rows[0];
+
+        // 🎁 Bonus: Audit Log
+        try {
+            await pool.query(
+                `INSERT INTO audit_logs (actor_id, action, entity_type, entity_id)
+                 VALUES ($1, $2, $3, $4)`,
+                [user.id, 'create_user', 'user', user.id]
+            );
+        } catch (auditError) {
+            console.error('Audit log error:', auditError.message);
+            // ادامه حتی اگر audit fail شد
+        }
 
         // تولید توکن
         const token = generateToken(user.id);
@@ -54,6 +99,7 @@ export const register = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 روز
         });
 
@@ -65,7 +111,8 @@ export const register = async (req, res) => {
                 id: user.id,
                 username: user.username,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                created_at: user.created_at
             }
         });
     } catch (error) {
@@ -77,6 +124,10 @@ export const register = async (req, res) => {
     }
 };
 
+/**
+ * Login user
+ * POST /api/auth/login
+ */
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -103,8 +154,8 @@ export const login = async (req, res) => {
 
         const user = result.rows[0];
 
-        // بررسی پسورد
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        // بررسی پسورد (فیلد صحیح password_hash)
+        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
         if (!isPasswordValid) {
             return res.status(401).json({
@@ -120,8 +171,20 @@ export const login = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
+
+        // 🎁 Bonus: Audit Log
+        try {
+            await pool.query(
+                `INSERT INTO audit_logs (actor_id, action, entity_type, entity_id)
+                 VALUES ($1, $2, $3, $4)`,
+                [user.id, 'login', 'user', user.id]
+            );
+        } catch (auditError) {
+            console.error('Audit log error:', auditError.message);
+        }
 
         res.json({
             success: true,
@@ -143,6 +206,10 @@ export const login = async (req, res) => {
     }
 };
 
+/**
+ * Logout user
+ * POST /api/auth/logout
+ */
 export const logout = (req, res) => {
     res.clearCookie('token');
     res.json({
@@ -151,6 +218,10 @@ export const logout = (req, res) => {
     });
 };
 
+/**
+ * Get current user
+ * GET /api/auth/me
+ */
 export const getMe = async (req, res) => {
     res.json({
         success: true,
