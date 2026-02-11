@@ -3,37 +3,37 @@
 // =========================================
 
 const Auth = {
-  // ذخیره Token و اطلاعات کاربر
+  // Save Token and user information
   saveAuth(token, user) {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
   },
 
-  // دریافت اطلاعات کاربر
+  // Get user information
   getUser() {
     const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   },
 
-  // چک کردن لاگین بودن
+  // Check if logged in
   isLoggedIn() {
     return !!localStorage.getItem('token');
   },
 
-  // خروج از سیستم
+  // Logout
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/pages/login.html';
   },
 
-  // چک کردن نقش کاربر
+  // Check user role
   hasRole(...roles) {
     const user = this.getUser();
     return user && roles.includes(user.role);
   },
 
-  // Guard برای صفحات محافظت شده
+  // Guard for protected pages
   requireAuth() {
     if (!this.isLoggedIn()) {
       window.location.href = '/pages/login.html';
@@ -42,19 +42,19 @@ const Auth = {
     return true;
   },
 
-  // Guard برای نقش‌های خاص
+  // Guard for specific roles
   requireRole(...roles) {
     if (!this.requireAuth()) return false;
     
     if (!this.hasRole(...roles)) {
-      Utils.showAlert('شما دسترسی به این بخش را ندارید', 'error');
+      Utils.showAlert('You do not have access to this section', 'error');
       window.location.href = '/pages/dashboard.html';
       return false;
     }
     return true;
   },
 
-  // نمایش نام کاربر در Navbar
+  // Display user name in Navbar
   displayUserInfo() {
     const user = this.getUser();
     if (!user) return;

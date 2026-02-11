@@ -3,22 +3,22 @@
 // =========================================
 
 const API = {
-  // Base URL (فعلاً خالی، بعداً از Backend استفاده می‌کنیم)
+  // Base URL (empty for now, will use Backend later)
   baseURL: 'http://localhost:3000/api',
-  useMockData: true, // تا زمانی که Backend آماده نشده
+  useMockData: true, // Until Backend is ready
 
   // Mock Data
   mockData: {
     users: [
-      { id: '1', username: 'admin', email: 'admin@example.com', role: 'admin', full_name: 'مدیر سیستم' },
-      { id: '2', username: 'operator1', email: 'operator@example.com', role: 'operator', full_name: 'اپراتور یک' },
-      { id: '3', username: 'user1', email: 'user@example.com', role: 'user', full_name: 'کاربر یک' }
+      { id: '1', username: 'admin', email: 'admin@example.com', role: 'admin', full_name: 'System Administrator' },
+      { id: '2', username: 'operator1', email: 'operator@example.com', role: 'operator', full_name: 'Operator One' },
+      { id: '3', username: 'user1', email: 'user@example.com', role: 'user', full_name: 'User One' }
     ],
     services: [
       { 
         id: '1', 
-        name: 'وب‌سایت اصلی', 
-        description: 'سایت اصلی شرکت',
+        name: 'Main Website', 
+        description: 'Company main website',
         url: 'https://example.com',
         status: 'operational',
         uptime_percentage: 99.95,
@@ -27,8 +27,8 @@ const API = {
       },
       { 
         id: '2', 
-        name: 'API سرویس', 
-        description: 'API عمومی',
+        name: 'API Service', 
+        description: 'Public API',
         url: 'https://api.example.com',
         status: 'operational',
         uptime_percentage: 99.80,
@@ -37,8 +37,8 @@ const API = {
       },
       { 
         id: '3', 
-        name: 'پایگاه داده', 
-        description: 'سرور اصلی',
+        name: 'Database', 
+        description: 'Main server',
         url: 'postgres://db.example.com',
         status: 'degraded',
         uptime_percentage: 98.50,
@@ -50,21 +50,21 @@ const API = {
       {
         id: '1',
         service_id: '3',
-        title: 'کندی در پاسخ‌دهی',
-        description: 'سرور با افزایش ترافیک مواجه است',
+        title: 'Slow Response Time',
+        description: 'Server experiencing increased traffic',
         severity: 'medium',
         status: 'monitoring',
         started_at: '2026-02-10T14:30:00Z',
         updates: [
           {
             id: '1',
-            message: 'تیم فنی در حال بررسی مشکل است',
+            message: 'Technical team is investigating the issue',
             status: 'investigating',
             created_at: '2026-02-10T14:35:00Z'
           },
           {
             id: '2',
-            message: 'علت مشکل شناسایی شد',
+            message: 'Root cause identified',
             status: 'identified',
             created_at: '2026-02-10T15:00:00Z'
           }
@@ -79,6 +79,7 @@ const API = {
   },
 
   // Helper: Make Request (Real API)
+  // Backend format: { success: true/false, message: "...", data: {} }
   async request(endpoint, options = {}) {
     const token = this.getToken();
     const headers = {
@@ -86,6 +87,7 @@ const API = {
       ...options.headers
     };
 
+    // Add Bearer Token to header
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -98,18 +100,20 @@ const API = {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || 'خطا در ارتباط با سرور');
+      // Check standard Backend format: { success, message, data }
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Server communication error');
       }
 
-      return data;
+      // Return data from response
+      return data.data;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
   },
 
-  // Mock Delay (برای شبیه‌سازی تأخیر شبکه)
+  // Mock Delay (to simulate network latency)
   delay(ms = 500) {
     return new Promise(resolve => setTimeout(resolve, ms));
   },
@@ -123,8 +127,9 @@ const API = {
         const token = 'mock_token_' + user.id;
         return { token, user };
       }
-      throw new Error('نام کاربری یا رمز عبور اشتباه است');
+      throw new Error('Invalid username or password');
     }
+    // Backend endpoint: POST /api/auth/login
     return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password })
@@ -143,10 +148,34 @@ const API = {
       const token = 'mock_token_' + newUser.id;
       return { token, user: newUser };
     }
+    // Backend endpoint: POST /api/auth/register
     return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData)
     });
+  },
+
+  async logout() {
+    if (this.useMockData) {
+      await this.delay();
+      return { message: 'Logout successful' };
+    }
+    // Backend endpoint: POST /api/auth/logout
+    return this.request('/auth/logout', { method: 'POST' });
+  },
+
+  async getCurrentUser() {
+    if (this.useMockData) {
+      await this.delay();
+      const token = this.getToken();
+      if (!token) throw new Error('Token not found');
+      const userId = token.replace('mock_token_', '');
+      const user = this.mockData.users.find(u => u.id === userId);
+      if (!user) throw new Error('User not found');
+      return { user };
+    }
+    // Backend endpoint: GET /api/auth/me
+    return this.request('/auth/me');
   },
 
   // ================== SERVICES APIs ==================
@@ -155,6 +184,7 @@ const API = {
       await this.delay();
       return { services: this.mockData.services };
     }
+    // Backend endpoint: GET /api/services
     return this.request('/services');
   },
 
@@ -162,9 +192,10 @@ const API = {
     if (this.useMockData) {
       await this.delay();
       const service = this.mockData.services.find(s => s.id === id);
-      if (!service) throw new Error('سرویس یافت نشد');
+      if (!service) throw new Error('Service not found');
       return { service };
     }
+    // Backend endpoint: GET /api/services/:id
     return this.request(`/services/${id}`);
   },
 
@@ -182,6 +213,7 @@ const API = {
       this.mockData.services.push(newService);
       return { service: newService };
     }
+    // Backend endpoint: POST /api/services (admin only)
     return this.request('/services', {
       method: 'POST',
       body: JSON.stringify(serviceData)
@@ -192,13 +224,29 @@ const API = {
     if (this.useMockData) {
       await this.delay();
       const index = this.mockData.services.findIndex(s => s.id === id);
-      if (index === -1) throw new Error('سرویس یافت نشد');
+      if (index === -1) throw new Error('Service not found');
       this.mockData.services[index] = { ...this.mockData.services[index], ...serviceData };
       return { service: this.mockData.services[index] };
     }
+    // Backend endpoint: PUT /api/services/:id
     return this.request(`/services/${id}`, {
       method: 'PUT',
       body: JSON.stringify(serviceData)
+    });
+  },
+
+  async updateServiceStatus(id, status) {
+    if (this.useMockData) {
+      await this.delay();
+      const index = this.mockData.services.findIndex(s => s.id === id);
+      if (index === -1) throw new Error('Service not found');
+      this.mockData.services[index].status = status;
+      return { service: this.mockData.services[index] };
+    }
+    // Backend endpoint: PATCH /api/services/:id/status (engineer, admin)
+    return this.request(`/services/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
     });
   },
 
@@ -206,10 +254,11 @@ const API = {
     if (this.useMockData) {
       await this.delay();
       const index = this.mockData.services.findIndex(s => s.id === id);
-      if (index === -1) throw new Error('سرویس یافت نشد');
+      if (index === -1) throw new Error('Service not found');
       this.mockData.services.splice(index, 1);
-      return { message: 'سرویس حذف شد' };
+      return { message: 'Service deleted' };
     }
+    // Backend endpoint: DELETE /api/services/:id
     return this.request(`/services/${id}`, { method: 'DELETE' });
   },
 
@@ -223,6 +272,7 @@ const API = {
       }
       return { incidents };
     }
+    // Backend endpoint: GET /api/incidents
     const query = serviceId ? `?service_id=${serviceId}` : '';
     return this.request(`/incidents${query}`);
   },
@@ -231,9 +281,10 @@ const API = {
     if (this.useMockData) {
       await this.delay();
       const incident = this.mockData.incidents.find(i => i.id === id);
-      if (!incident) throw new Error('رخداد یافت نشد');
+      if (!incident) throw new Error('Incident not found');
       return { incident };
     }
+    // Backend endpoint: GET /api/incidents/:id
     return this.request(`/incidents/${id}`);
   },
 
@@ -250,6 +301,7 @@ const API = {
       this.mockData.incidents.push(newIncident);
       return { incident: newIncident };
     }
+    // Backend endpoint: POST /api/incidents (engineer, admin)
     return this.request('/incidents', {
       method: 'POST',
       body: JSON.stringify(incidentData)
@@ -260,7 +312,7 @@ const API = {
     if (this.useMockData) {
       await this.delay();
       const incident = this.mockData.incidents.find(i => i.id === incidentId);
-      if (!incident) throw new Error('رخداد یافت نشد');
+      if (!incident) throw new Error('Incident not found');
       
       const newUpdate = {
         id: String(Date.now()),
@@ -272,6 +324,7 @@ const API = {
       
       return { update: newUpdate };
     }
+    // Backend endpoint: POST /api/incidents/:id/updates
     return this.request(`/incidents/${incidentId}/updates`, {
       method: 'POST',
       body: JSON.stringify(updateData)

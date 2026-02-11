@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | TracerouteX</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px 0;
+    }
+
+    .register-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+
+    .register-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 2.5rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .register-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .register-logo {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .register-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .register-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .form-footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .form-footer a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .form-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .btn-block {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .password-requirements {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-container">
+    <div class="register-card">
+      <div class="register-header">
+        <div class="register-logo">🛰️</div>
+        <h1 class="register-title">Register for TracerouteX</h1>
+        <p class="register-subtitle">Create a new account</p>
+      </div>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label class="form-label" for="full_name">Full Name</label>
+          <input 
+            type="text" 
+            id="full_name" 
+            name="full_name" 
+            class="form-input" 
+            placeholder="Enter your full name"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="form-input" 
+            placeholder="Choose a unique username"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            class="form-input" 
+            placeholder="example@domain.com"
+            required
+          >
+          <span id="emailError" class="form-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="form-input" 
+            placeholder="Minimum 6 characters"
+            required
+          >
+          <div class="password-requirements">
+            Minimum 6 characters
+          </div>
+          <span id="passwordError" class="form-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm Password</label>
+          <input 
+            type="password" 
+            id="confirm_password" 
+            name="confirm_password" 
+            class="form-input" 
+            placeholder="Re-enter your password"
+            required
+          >
+          <span id="confirmError" class="form-error"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+          Register
+        </button>
+      </form>
+
+      <div class="form-footer">
+        Already have an account? 
+        <a href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/utils.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    // Check if user is already logged in
+    if (Auth.isLoggedIn()) {
+      window.location.href = 'dashboard.html';
+    }
+
+    const registerForm = document.getElementById('registerForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirm_password');
+
+    // Real-time Email Validation
+    emailInput.addEventListener('blur', () => {
+      const emailError = document.getElementById('emailError');
+      if (emailInput.value && !Utils.validateEmail(emailInput.value)) {
+        emailError.textContent = 'Invalid email format';
+        emailInput.style.borderColor = 'var(--danger-color)';
+      } else {
+        emailError.textContent = '';
+        emailInput.style.borderColor = '';
+      }
+    });
+
+    // Real-time Password Validation
+    passwordInput.addEventListener('input', () => {
+      const passwordError = document.getElementById('passwordError');
+      if (passwordInput.value && !Utils.validatePassword(passwordInput.value)) {
+        passwordError.textContent = 'Password must be at least 6 characters';
+        passwordInput.style.borderColor = 'var(--danger-color)';
+      } else {
+        passwordError.textContent = '';
+        passwordInput.style.borderColor = '';
+      }
+    });
+
+    // Real-time Confirm Password Validation
+    confirmInput.addEventListener('input', () => {
+      const confirmError = document.getElementById('confirmError');
+      if (confirmInput.value && confirmInput.value !== passwordInput.value) {
+        confirmError.textContent = 'Passwords do not match';
+        confirmInput.style.borderColor = 'var(--danger-color)';
+      } else {
+        confirmError.textContent = '';
+        confirmInput.style.borderColor = '';
+      }
+    });
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const full_name = document.getElementById('full_name').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirm_password = document.getElementById('confirm_password').value;
+
+      // Validation
+      if (!full_name || !username || !email || !password || !confirm_password) {
+        Utils.showAlert('Please fill in all fields', 'error');
+        return;
+      }
+
+      if (!Utils.validateEmail(email)) {
+        Utils.showAlert('Invalid email format', 'error');
+        return;
+      }
+
+      if (!Utils.validatePassword(password)) {
+        Utils.showAlert('Password must be at least 6 characters', 'error');
+        return;
+      }
+
+      if (password !== confirm_password) {
+        Utils.showAlert('Passwords do not match', 'error');
+        return;
+      }
+
+      // Disable button
+      const submitBtn = registerForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registering...';
+
+      try {
+        const response = await API.register({
+          full_name,
+          username,
+          email,
+          password
+        });
+        
+        // Save Token and User
+        Auth.saveAuth(response.token, response.user);
+        
+        Utils.showAlert('Registration successful! Redirecting to dashboard...', 'success');
+        
+        // Redirect after 1.5 seconds
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 1500);
+
+      } catch (error) {
+        Utils.showAlert(error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Register';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TracerouteX - Service Monitoring System</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    body {
+      margin: 0;
+      background: white;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+      padding: 2rem;
+    }
+
+    .hero-content {
+      max-width: 800px;
+    }
+
+    .hero-logo {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero-title {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero-btn {
+      padding: 0.875rem 2rem;
+      font-size: 1rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.2s;
+      cursor: pointer;
+      border: none;
+    }
+
+    .hero-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .hero-btn-primary {
+      background: white;
+      color: #667eea;
+    }
+
+    .hero-btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid white;
+    }
+
+    .features {
+      padding: 4rem 2rem;
+      background: var(--bg-secondary);
+    }
+
+    .features-title {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 3rem;
+      color: var(--text-primary);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .feature-description {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2rem;
+      }
+
+      .hero-subtitle {
+        font-size: 1rem;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+      }
+
+      .hero-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-logo">🛰️</div>
+      <h1 class="hero-title">TracerouteX</h1>
+      <p class="hero-subtitle">
+        Service Monitoring and Status Management System with Real-Time Incident Tracking
+      </p>
+      <div class="hero-buttons">
+        <a href="pages/login.html" class="hero-btn hero-btn-primary">Login</a>
+        <a href="pages/register.html" class="hero-btn hero-btn-secondary">Free Registration</a>
+        <a href="pages/public-status.html" class="hero-btn hero-btn-secondary">View Service Status</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2 class="features-title">System Features</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3 class="feature-title">Real-Time Monitoring</h3>
+        <p class="feature-description">
+          Monitor service status in real-time and receive accurate statistics on Uptime and response time
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🚨</div>
+        <h3 class="feature-title">Incident Management</h3>
+        <p class="feature-description">
+          Record, track, and manage incidents with the ability to send updates and display complete timeline
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3 class="feature-title">Public Status Page</h3>
+        <p class="feature-description">
+          Display service status to end users without requiring system login
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <h3 class="feature-title">Access Control</h3>
+        <p class="feature-description">
+          Role-Based Access Control system with Admin, Operator, and User roles
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3 class="feature-title">Advanced Reporting</h3>
+        <p class="feature-description">
+          Display statistics and analytical charts of service performance across different time periods
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">Fast User Interface</h3>
+        <p class="feature-description">
+          Modern and user-friendly design with optimal performance on all devices
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <script src="assets/js/auth.js"></script>
+  <script>
+    // If user is logged in, redirect to dashboard
+    if (Auth.isLoggedIn()) {
+      window.location.href = 'pages/dashboard.html';
+    }
+  </script>
+</body>
+</html>

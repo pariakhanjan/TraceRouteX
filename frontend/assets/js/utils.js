@@ -3,7 +3,7 @@
 // =========================================
 
 const Utils = {
-  // نمایش پیام به کاربر
+  // Display message to user
   showAlert(message, type = 'info', duration = 3000) {
     const alertContainer = document.getElementById('alert-container') || this.createAlertContainer();
     
@@ -36,7 +36,7 @@ const Utils = {
     return container;
   },
 
-  // فرمت کردن تاریخ شمسی
+  // Format Persian date
   formatPersianDate(date) {
     const d = new Date(date);
     return new Intl.DateTimeFormat('fa-IR', {
@@ -48,7 +48,7 @@ const Utils = {
     }).format(d);
   },
 
-  // فرمت کردن زمان نسبی (مثلاً "۵ دقیقه پیش")
+  // Format relative time (e.g., "5 minutes ago")
   formatRelativeTime(date) {
     const diff = Date.now() - new Date(date).getTime();
     const seconds = Math.floor(diff / 1000);
@@ -56,10 +56,10 @@ const Utils = {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (seconds < 60) return 'همین الان';
-    if (minutes < 60) return `${minutes} دقیقه پیش`;
-    if (hours < 24) return `${hours} ساعت پیش`;
-    return `${days} روز پیش`;
+    if (seconds < 60) return 'Just now';
+    if (minutes < 60) return `${minutes} minutes ago`;
+    if (hours < 24) return `${hours} hours ago`;
+    return `${days} days ago`;
   },
 
   // Validate Email
@@ -68,12 +68,12 @@ const Utils = {
     return re.test(email);
   },
 
-  // Validate Password (حداقل 6 کاراکتر)
+  // Validate Password (minimum 6 characters)
   validatePassword(password) {
     return password.length >= 6;
   },
 
-  // نمایش/مخفی کردن Loading Spinner
+  // Show/Hide Loading Spinner
   showLoading(container) {
     const spinner = document.createElement('div');
     spinner.className = 'spinner';
@@ -86,36 +86,36 @@ const Utils = {
     if (spinner) spinner.remove();
   },
 
-  // تبدیل Status به فارسی
+  // Translate Status to English
   translateStatus(status) {
     const translations = {
-      'operational': 'عملیاتی',
-      'degraded': 'کاهش عملکرد',
-      'down': 'خارج از سرویس',
-      'maintenance': 'در دست تعمیر',
-      'investigating': 'در حال بررسی',
-      'identified': 'شناسایی شده',
-      'monitoring': 'در حال نظارت',
-      'resolved': 'حل شده',
-      'low': 'کم',
-      'medium': 'متوسط',
-      'high': 'زیاد',
-      'critical': 'بحرانی'
+      'operational': 'Operational',
+      'degraded': 'Degraded Performance',
+      'down': 'Down',
+      'maintenance': 'Under Maintenance',
+      'investigating': 'Investigating',
+      'identified': 'Identified',
+      'monitoring': 'Monitoring',
+      'resolved': 'Resolved',
+      'low': 'Low',
+      'medium': 'Medium',
+      'high': 'High',
+      'critical': 'Critical'
     };
     return translations[status] || status;
   },
 
-  // تبدیل Role به فارسی
+  // Translate Role to English
   translateRole(role) {
     const translations = {
-      'admin': 'مدیر',
-      'operator': 'اپراتور',
-      'user': 'کاربر'
+      'admin': 'Administrator',
+      'operator': 'Operator',
+      'user': 'User'
     };
     return translations[role] || role;
   },
 
-  // رنگ Badge بر اساس Status
+  // Badge color based on Status
   getStatusBadgeClass(status) {
     const classes = {
       'operational': 'badge-success',
@@ -130,7 +130,7 @@ const Utils = {
     return classes[status] || 'badge-info';
   },
 
-  // Debounce برای Search
+  // Debounce for Search
   debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -146,7 +146,7 @@ const Utils = {
   // Copy to Clipboard
   copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-      this.showAlert('کپی شد!', 'success', 1500);
+      this.showAlert('Copied!', 'success', 1500);
     });
   }
 };

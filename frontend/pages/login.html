@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | TracerouteX</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 2.5rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-logo {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .form-footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .form-footer a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .form-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .btn-block {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .demo-accounts {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .demo-title {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .demo-account {
+      background: var(--bg-secondary);
+      padding: 0.75rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 0.5rem;
+      font-size: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .demo-account strong {
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">🛰️</div>
+        <h1 class="login-title">TracerouteX</h1>
+        <p class="login-subtitle">Service Monitoring System</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="form-input" 
+            placeholder="Enter your username"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="form-input" 
+            placeholder="Enter your password"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+          Login
+        </button>
+      </form>
+
+      <div class="form-footer">
+        Don't have an account? 
+        <a href="register.html">Register</a>
+      </div>
+
+      <!-- Demo Accounts (Only in Mock mode) -->
+      <div class="demo-accounts">
+        <div class="demo-title">🎯 Test Accounts (password: password)</div>
+        <div class="demo-account">
+          <span><strong>Admin:</strong> admin</span>
+          <span class="badge badge-danger">Admin</span>
+        </div>
+        <div class="demo-account">
+          <span><strong>Operator:</strong> operator1</span>
+          <span class="badge badge-warning">Operator</span>
+        </div>
+        <div class="demo-account">
+          <span><strong>User:</strong> user1</span>
+          <span class="badge badge-info">User</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/utils.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    // Check if user is already logged in
+    if (Auth.isLoggedIn()) {
+      window.location.href = 'dashboard.html';
+    }
+
+    const loginForm = document.getElementById('loginForm');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      // Validation
+      if (!username || !password) {
+        Utils.showAlert('Please fill in all fields', 'error');
+        return;
+      }
+
+      // Disable button
+      const submitBtn = loginForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+
+      try {
+        const response = await API.login(username, password);
+        
+        // Save Token and User
+        Auth.saveAuth(response.token, response.user);
+        
+        Utils.showAlert('Login successful!', 'success');
+        
+        // Redirect after 1 second
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 1000);
+
+      } catch (error) {
+        Utils.showAlert(error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login';
+      }
+    });
+  </script>
+</body>
+</html>
