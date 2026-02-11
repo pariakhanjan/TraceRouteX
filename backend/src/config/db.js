@@ -1,5 +1,8 @@
-const { Pool } = require('pg');
-require('dotenv').config();
+import pkg from 'pg';
+const { Pool } = pkg;
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // تنظیمات اتصال به PostgreSQL
 const pool = new Pool({
@@ -8,49 +11,45 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'TraceRouteX',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD,
-    max: 20, // حداکثر تعداد اتصالات همزمان
-    idleTimeoutMillis: 30000, // زمان بسته شدن اتصالات بیکار
-    connectionTimeoutMillis: 2000, // تایم‌اوت اتصال
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
 });
 
-// تست اتصال
+// Event handlers
 pool.on('connect', () => {
-    console.log('Database connected! ✅');
+    console.log('✅ Database connected!');
 });
 
 pool.on('error', (err) => {
-    console.error('Error in connecting to database!❌', err);
+    console.error('❌ Database error:', err);
     process.exit(-1);
 });
 
-// تابع کمکی برای کوئری‌ها
-const query = async (text, params) => {
+// Query helper function
+export const query = async (text, params) => {
     const start = Date.now();
     try {
         const res = await pool.query(text, params);
         const duration = Date.now() - start;
-        console.log('📊 Query is running!', { text, duration, rows: res.rowCount });
+        console.log('📊 Query executed', { duration, rows: res.rowCount });
         return res;
     } catch (error) {
-        console.error('❌ Error in running query!', error);
+        console.error('❌ Query error:', error);
         throw error;
     }
 };
 
-// تابع تست اتصال
-const testConnection = async () => {
+// Test connection
+export const testConnection = async () => {
     try {
         const result = await query('SELECT NOW()');
         console.log('✅ Database is available!', result.rows[0].now);
         return true;
     } catch (error) {
-        console.error('❌ Database is not available!');
+        console.error('❌ Database connection failed!');
         return false;
     }
 };
 
-module.exports = {
-    pool,
-    query,
-    testConnection
-};
+export default pool;

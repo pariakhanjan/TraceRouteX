@@ -1,202 +1,179 @@
+-- پاک‌سازی schema قبلی
 DROP SCHEMA public CASCADE;
-
 CREATE SCHEMA public AUTHORIZATION pg_database_owner;
 
-COMMENT ON SCHEMA public
-    IS 'standard public schema';
+COMMENT ON SCHEMA public IS 'standard public schema';
 
-GRANT CREATE, USAGE
-    ON SCHEMA public
-    TO pg_database_owner;
+GRANT CREATE, USAGE ON SCHEMA public TO pg_database_owner;
+GRANT USAGE ON SCHEMA public TO PUBLIC;
 
-GRANT USAGE
-    ON SCHEMA public
-    TO PUBLIC;
+-- ========================================
+-- تعریف ENUM Types
+-- ========================================
 
--- فعال‌سازی UUID
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- نقش‌های کاربری: viewer, engineer, admin
+CREATE TYPE user_role AS ENUM ('viewer', 'engineer', 'admin');
 
+-- وضعیت سرویس: Up, Degraded, Down
+CREATE TYPE service_status AS ENUM ('up', 'degraded', 'down');
+
+-- وضعیت رخداد: open, resolved
+CREATE TYPE incident_status AS ENUM ('open', 'resolved');
+
+-- شدت رخداد: low, medium, high, critical
+CREATE TYPE incident_severity AS ENUM ('low', 'medium', 'high', 'critical');
+
+-- ========================================
 -- جدول کاربران
-CREATE TABLE users (
-                       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                       username VARCHAR(50) UNIQUE NOT NULL,
-                       email VARCHAR(100) UNIQUE NOT NULL,
-                       password_hash VARCHAR(255) NOT NULL,
-                       full_name VARCHAR(100),
-                       role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'operator', 'user')),
-                       is_active BOOLEAN DEFAULT true,
-                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- ========================================
+CREATE TABLE users
+(
+    id            SERIAL PRIMARY KEY,
+    username      VARCHAR(50) UNIQUE  NOT NULL,
+    email         VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255)        NOT NULL,
+    role          user_role           NOT NULL DEFAULT 'viewer',
+    created_at    TIMESTAMP                    DEFAULT NOW(),
+    updated_at    TIMESTAMP                    DEFAULT NOW()
 );
 
+-- ========================================
 -- جدول سرویس‌ها
-CREATE TABLE services (
-                          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                          name VARCHAR(100) NOT NULL,
-                          description TEXT,
-                          url VARCHAR(255),
-                          type VARCHAR(50), -- نوع سرویس (web, api, database, network, etc.)
-                          ip_address VARCHAR(45), -- آدرس IP (IPv4 یا IPv6)
-                          status VARCHAR(20) DEFAULT 'operational' CHECK (status IN ('operational', 'degraded', 'down', 'maintenance')),
-                          uptime_percentage DECIMAL(5,2) DEFAULT 100.00,
-                          response_time_avg INTEGER, -- میلی‌ثانیه
-                          owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
-                          is_public BOOLEAN DEFAULT true,
-                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- ========================================
+CREATE TABLE services
+(
+    id          SERIAL PRIMARY KEY,
+    name        VARCHAR(100)   NOT NULL,
+    description TEXT,
+    status      service_status NOT NULL DEFAULT 'up',
+    created_by  INTEGER        REFERENCES users (id) ON DELETE SET NULL,
+    created_at  TIMESTAMP               DEFAULT NOW(),
+    updated_at  TIMESTAMP               DEFAULT NOW()
 );
 
--- جدول حوادث (Incidents)
-CREATE TABLE incidents (
-                           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                           service_id UUID REFERENCES services(id) ON DELETE CASCADE,
-                           title VARCHAR(200) NOT NULL,
-                           description TEXT,
-                           severity VARCHAR(20) DEFAULT 'low' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
-                           status VARCHAR(20) DEFAULT 'investigating' CHECK (status IN ('investigating', 'identified', 'monitoring', 'resolved')),
-                           reported_by UUID REFERENCES users(id) ON DELETE SET NULL, -- کاربری که حادثه را گزارش داده
-                           started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                           resolved_at TIMESTAMP,
-                           created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-                           is_public BOOLEAN DEFAULT true,
-                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- ========================================
+-- جدول رخدادها (Incidents)
+-- ========================================
+CREATE TABLE incidents
+(
+    id               SERIAL PRIMARY KEY,
+    service_id       INTEGER           NOT NULL REFERENCES services (id) ON DELETE CASCADE,
+    title            VARCHAR(255)      NOT NULL,
+    description      TEXT              NOT NULL,
+    severity         incident_severity NOT NULL,
+    status           incident_status   NOT NULL DEFAULT 'open',
+    is_published     BOOLEAN                    DEFAULT FALSE, -- برای نمایش در صفحه عمومی
+    root_cause       TEXT,                                     -- خلاصه پایانی (Bonus)
+    prevention_notes TEXT,                                     -- یادداشت‌های پیشگیری (Bonus)
+    created_by       INTEGER           REFERENCES users (id) ON DELETE SET NULL,
+    resolved_by      INTEGER           REFERENCES users (id) ON DELETE SET NULL,
+    resolved_at      TIMESTAMP,
+    created_at       TIMESTAMP                  DEFAULT NOW(),
+    updated_at       TIMESTAMP                  DEFAULT NOW()
 );
 
--- جدول به‌روزرسانی‌های حادثه
-CREATE TABLE incident_updates (
-                                  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                  incident_id UUID REFERENCES incidents(id) ON DELETE CASCADE,
-                                  message TEXT NOT NULL,
-                                  status VARCHAR(20) CHECK (status IN ('investigating', 'identified', 'monitoring', 'resolved')),
-                                  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-                                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- ========================================
+-- جدول به‌روزرسانی‌های رخداد (خط زمانی)
+-- ========================================
+CREATE TABLE incident_updates
+(
+    id          SERIAL PRIMARY KEY,
+    incident_id INTEGER NOT NULL REFERENCES incidents (id) ON DELETE CASCADE,
+    message     TEXT    NOT NULL,
+    created_by  INTEGER REFERENCES users (id) ON DELETE SET NULL,
+    created_at  TIMESTAMP DEFAULT NOW()
 );
 
--- جدول متریک‌های سرویس (برای نمودارها)
-CREATE TABLE service_metrics (
-                                 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                 service_id UUID REFERENCES services(id) ON DELETE CASCADE,
-                                 response_time INTEGER NOT NULL, -- میلی‌ثانیه
-                                 status_code INTEGER,
-                                 is_up BOOLEAN DEFAULT true,
-                                 checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- ========================================
+-- جدول لاگ‌های حسابرسی (Bonus - امتیاز اضافی)
+-- ========================================
+CREATE TABLE audit_logs
+(
+    id          SERIAL PRIMARY KEY,
+    actor_id    INTEGER      REFERENCES users (id) ON DELETE SET NULL,
+    action      VARCHAR(100) NOT NULL, -- مثل: 'create_incident', 'update_service_status'
+    entity_type VARCHAR(50)  NOT NULL, -- مثل: 'incident', 'service', 'user'
+    entity_id   INTEGER,
+    details     JSONB,                 -- اطلاعات اضافی به صورت JSON
+    created_at  TIMESTAMP DEFAULT NOW()
 );
 
--- جدول اشتراک‌ها (Subscriptions) - برای اعلان‌ها
-CREATE TABLE subscriptions (
-                               id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                               user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-                               service_id UUID REFERENCES services(id) ON DELETE CASCADE,
-                               notification_email VARCHAR(100),
-                               is_active BOOLEAN DEFAULT true,
-                               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                               UNIQUE(user_id, service_id)
-);
-
+-- ========================================
 -- ایندکس‌ها برای بهبود کارایی
-CREATE INDEX idx_services_status ON services(status);
-CREATE INDEX idx_services_type ON services(type);
-CREATE INDEX idx_services_ip ON services(ip_address);
-CREATE INDEX idx_incidents_service ON incidents(service_id);
-CREATE INDEX idx_incidents_status ON incidents(status);
-CREATE INDEX idx_incidents_reported_by ON incidents(reported_by);
-CREATE INDEX idx_metrics_service_time ON service_metrics(service_id, checked_at);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
+-- ========================================
+CREATE INDEX idx_incidents_service ON incidents (service_id);
+CREATE INDEX idx_incidents_status ON incidents (status);
+CREATE INDEX idx_incidents_severity ON incidents (severity);
+CREATE INDEX idx_incident_updates_incident ON incident_updates (incident_id);
+CREATE INDEX idx_audit_logs_actor ON audit_logs (actor_id);
+CREATE INDEX idx_audit_logs_entity ON audit_logs (entity_type, entity_id);
 
--- تابع به‌روزرسانی خودکار updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-    RETURNS TRIGGER AS $$
+-- ========================================
+-- تابع و تریگرها برای به‌روزرسانی خودکار updated_at
+-- ========================================
+CREATE OR REPLACE FUNCTION update_timestamp()
+    RETURNS TRIGGER AS
+$$
 BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
+    NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
--- تریگرهای به‌روزرسانی خودکار
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER users_updated_at
+    BEFORE UPDATE
+    ON users
+    FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
 
-CREATE TRIGGER update_services_updated_at BEFORE UPDATE ON services
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER services_updated_at
+    BEFORE UPDATE
+    ON services
+    FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
 
-CREATE TRIGGER update_incidents_updated_at BEFORE UPDATE ON incidents
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER incidents_updated_at
+    BEFORE UPDATE
+    ON incidents
+    FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
 
--- اضافه کردن کاربران نمونه
-INSERT INTO users (username, email, password_hash, full_name, role) VALUES
-('admin', 'admin@traceroutex.com', '$2b$10$rX8V9KHhOxJqE9yN5zKxLO8FqGxZ5hPwJ3MqYnF1vLKzGxE5rQx8S', 'مدیر سیستم', 'admin'),
-('operator1', 'operator@traceroutex.com', '$2b$10$rX8V9KHhOxJqE9yN5zKxLO8FqGxZ5hPwJ3MqYnF1vLKzGxE5rQx8S', 'اپراتور یک', 'operator'),
-('user1', 'user@example.com', '$2b$10$rX8V9KHhOxJqE9yN5zKxLO8FqGxZ5hPwJ3MqYnF1vLKzGxE5rQx8S', 'کاربر یک', 'user');
+-- ========================================
+-- داده‌های نمونه
+-- ========================================
 
--- اضافه کردن سرویس‌های نمونه
-INSERT INTO services (name, description, url, type, ip_address, status, uptime_percentage, response_time_avg, owner_id)
-SELECT
-    'وب‌سایت اصلی',
-    'سایت اصلی شرکت',
-    'https://example.com',
-    'web',
-    '192.168.1.10',
-    'operational',
-    99.95,
-    120,
-    id FROM users WHERE username = 'admin'
-UNION ALL
-SELECT
-    'API سرویس',
-    'API عمومی برای توسعه‌دهندگان',
-    'https://api.example.com',
-    'api',
-    '192.168.1.20',
-    'operational',
-    99.80,
-    85,
-    id FROM users WHERE username = 'admin'
-UNION ALL
-SELECT
-    'پایگاه داده',
-    'سرور PostgreSQL اصلی',
-    'postgres://db.example.com',
-    'database',
-    '192.168.1.30',
-    'degraded',
-    98.50,
-    250,
-    id FROM users WHERE username = 'operator1';
+-- کاربران نمونه (رمز عبور: password123)
+INSERT INTO users (username, email, password_hash, role)
+VALUES ('admin', 'admin@traceroutex.com', '$2a$10$examplehash1', 'admin'),
+       ('engineer1', 'engineer@traceroutex.com', '$2a$10$examplehash2', 'engineer'),
+       ('viewer1', 'viewer@traceroutex.com', '$2a$10$examplehash3', 'viewer');
 
--- اضافه کردن یک حادثه نمونه
-INSERT INTO incidents (service_id, title, description, severity, status, reported_by, created_by, is_public)
-SELECT
-    s.id,
-    'کندی در پاسخ‌دهی',
-    'سرور دیتابیس با افزایش ترافیک مواجه شده است',
-    'medium',
-    'monitoring',
-    u.id,
-    u.id,
-    true
-FROM services s, users u
-WHERE s.name = 'پایگاه داده' AND u.username = 'operator1'
-LIMIT 1;
+-- سرویس‌های نمونه
+INSERT INTO services (name, description, status, created_by)
+VALUES ('Payment Service', 'سرویس پرداخت و تراکنش‌های مالی', 'up', 1),
+       ('Authentication Service', 'سرویس احراز هویت کاربران', 'up', 1),
+       ('Main Website', 'وب‌سایت اصلی شرکت', 'degraded', 1),
+       ('Database Server', 'سرور پایگاه داده اصلی', 'up', 1);
 
--- اضافه کردن آپدیت برای حادثه
-INSERT INTO incident_updates (incident_id, message, status, created_by)
-SELECT
-    i.id,
-    'تیم فنی در حال بررسی مشکل است',
-    'investigating',
-    u.id
-FROM incidents i, users u
-WHERE i.title = 'کندی در پاسخ‌دهی' AND u.username = 'operator1'
-LIMIT 1;
+-- رخدادهای نمونه
+INSERT INTO incidents (service_id, title, description, severity, status, is_published, created_by)
+VALUES (3, 'کندی در بارگذاری صفحات', 'صفحات با تاخیر بارگذاری می‌شوند. کاربران گزارش کندی داده‌اند.', 'medium', 'open',
+        true, 2),
+       (1, 'خطا در پردازش تراکنش‌ها', 'برخی تراکنش‌های پرداخت با خطا مواجه شده‌اند', 'high', 'resolved', true, 2);
 
--- اضافه کردن متریک‌های نمونه
-INSERT INTO service_metrics (service_id, response_time, status_code, is_up, checked_at)
-SELECT
-    id,
-    120 + (random() * 50)::INTEGER,
-    200,
-    true,
-    CURRENT_TIMESTAMP - (interval '1 minute' * generate_series)
-FROM services, generate_series(1, 10);
+-- به‌روزرسانی‌های رخداد (خط زمانی)
+INSERT INTO incident_updates (incident_id, message, created_by)
+VALUES (1, 'مشکل شناسایی شد. سرور دیتابیس تحت بررسی است.', 2),
+       (1, 'کش Redis ریست شد. در حال مانیتور کردن وضعیت...', 2),
+       (2, 'تیم فنی در حال بررسی لاگ‌های سرور پرداخت است', 2),
+       (2, 'مشکل در ارتباط با Gateway پرداخت شناسایی شد', 2),
+       (2, 'تنظیمات Gateway اصلاح شد. مشکل برطرف شده است', 2);
+
+-- به‌روزرسانی وضعیت رخداد حل‌شده
+UPDATE incidents
+SET status           = 'resolved',
+    resolved_by      = 2,
+    resolved_at      = NOW(),
+    root_cause       = 'مشکل در تنظیمات Gateway پرداخت',
+    prevention_notes = 'مانیتورینگ بهتر Gateway و تنظیم آلارم برای خطاهای ارتباطی'
+WHERE id = 2;
