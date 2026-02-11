@@ -1,4 +1,3 @@
-
 DROP SCHEMA public CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION pg_database_owner;
@@ -36,6 +35,8 @@ CREATE TABLE services (
                           name VARCHAR(100) NOT NULL,
                           description TEXT,
                           url VARCHAR(255),
+                          type VARCHAR(50), -- نوع سرویس (web, api, database, network, etc.)
+                          ip_address VARCHAR(45), -- آدرس IP (IPv4 یا IPv6)
                           status VARCHAR(20) DEFAULT 'operational' CHECK (status IN ('operational', 'degraded', 'down', 'maintenance')),
                           uptime_percentage DECIMAL(5,2) DEFAULT 100.00,
                           response_time_avg INTEGER, -- میلی‌ثانیه
@@ -53,6 +54,7 @@ CREATE TABLE incidents (
                            description TEXT,
                            severity VARCHAR(20) DEFAULT 'low' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
                            status VARCHAR(20) DEFAULT 'investigating' CHECK (status IN ('investigating', 'identified', 'monitoring', 'resolved')),
+                           reported_by UUID REFERENCES users(id) ON DELETE SET NULL, -- کاربری که حادثه را گزارش داده
                            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                            resolved_at TIMESTAMP,
                            created_by UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -94,8 +96,11 @@ CREATE TABLE subscriptions (
 
 -- ایندکس‌ها برای بهبود کارایی
 CREATE INDEX idx_services_status ON services(status);
+CREATE INDEX idx_services_type ON services(type);
+CREATE INDEX idx_services_ip ON services(ip_address);
 CREATE INDEX idx_incidents_service ON incidents(service_id);
 CREATE INDEX idx_incidents_status ON incidents(status);
+CREATE INDEX idx_incidents_reported_by ON incidents(reported_by);
 CREATE INDEX idx_metrics_service_time ON service_metrics(service_id, checked_at);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
@@ -109,18 +114,30 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- تریگرهای به‌روزرسانی خودکار
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_services_updated_at BEFORE UPDATE ON services
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_incidents_updated_at BEFORE UPDATE ON incidents
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- اضافه کردن کاربران نمونه
 INSERT INTO users (username, email, password_hash, full_name, role) VALUES
---('admin', 'admin@traceroutex.com', '$2b$10$rX8V9KHhOxJqE9yN5zKxLO8FqGxZ5hPwJ3MqYnF1vLKzGxE5rQx8S', 'مدیر سیستم', 'admin'),
+('admin', 'admin@traceroutex.com', '$2b$10$rX8V9KHhOxJqE9yN5zKxLO8FqGxZ5hPwJ3MqYnF1vLKzGxE5rQx8S', 'مدیر سیستم', 'admin'),
 ('operator1', 'operator@traceroutex.com', '$2b$10$rX8V9KHhOxJqE9yN5zKxLO8FqGxZ5hPwJ3MqYnF1vLKzGxE5rQx8S', 'اپراتور یک', 'operator'),
 ('user1', 'user@example.com', '$2b$10$rX8V9KHhOxJqE9yN5zKxLO8FqGxZ5hPwJ3MqYnF1vLKzGxE5rQx8S', 'کاربر یک', 'user');
 
 -- اضافه کردن سرویس‌های نمونه
-INSERT INTO services (name, description, url, status, uptime_percentage, response_time_avg, owner_id)
+INSERT INTO services (name, description, url, type, ip_address, status, uptime_percentage, response_time_avg, owner_id)
 SELECT
     'وب‌سایت اصلی',
     'سایت اصلی شرکت',
     'https://example.com',
+    'web',
+    '192.168.1.10',
     'operational',
     99.95,
     120,
@@ -130,6 +147,8 @@ SELECT
     'API سرویس',
     'API عمومی برای توسعه‌دهندگان',
     'https://api.example.com',
+    'api',
+    '192.168.1.20',
     'operational',
     99.80,
     85,
@@ -139,19 +158,22 @@ SELECT
     'پایگاه داده',
     'سرور PostgreSQL اصلی',
     'postgres://db.example.com',
+    'database',
+    '192.168.1.30',
     'degraded',
     98.50,
     250,
     id FROM users WHERE username = 'operator1';
 
 -- اضافه کردن یک حادثه نمونه
-INSERT INTO incidents (service_id, title, description, severity, status, created_by, is_public)
+INSERT INTO incidents (service_id, title, description, severity, status, reported_by, created_by, is_public)
 SELECT
     s.id,
     'کندی در پاسخ‌دهی',
     'سرور دیتابیس با افزایش ترافیک مواجه شده است',
     'medium',
     'monitoring',
+    u.id,
     u.id,
     true
 FROM services s, users u
