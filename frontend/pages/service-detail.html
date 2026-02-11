@@ -1,570 +1,549 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Service Details | TracerouteX</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
-  <link rel="stylesheet" href="../assets/css/dashboard.css">
-  <style>
-    .service-detail-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Details | TracerouteX</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <style>
+        .service-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
 
-    .service-title-section {
-      flex: 1;
-    }
+        .service-title-section {
+            flex: 1;
+        }
 
-    .service-title {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
+        .service-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
 
-    .service-url-display {
-      color: var(--primary-color);
-      font-size: 0.875rem;
-      font-family: 'Courier New', monospace;
-      margin-bottom: 0.5rem;
-    }
+        .service-description-display {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
 
-    .service-description-display {
-      color: var(--text-secondary);
-      margin-bottom: 1rem;
-    }
+        .service-meta {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
 
-    .service-actions {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
+        .service-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
+        .service-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
 
-    .metric-card {
-      background: white;
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      box-shadow: var(--shadow-md);
-    }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
 
-    .metric-card-label {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      margin-bottom: 0.5rem;
-    }
+        .info-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
 
-    .metric-card-value {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
+        .info-card-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
 
-    .metric-card-unit {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      margin-left: 0.25rem;
-    }
+        .info-card-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
 
-    .uptime-bar {
-      height: 40px;
-      background: var(--bg-secondary);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      margin-bottom: 0.5rem;
-      position: relative;
-    }
+        .incidents-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
 
-    .uptime-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--success-color), #34d399);
-      transition: width 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 600;
-    }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2rem;
+            border-left: 2px solid var(--border-color);
+            padding-left: 2rem;
+        }
 
-    .uptime-details {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
+        .timeline-item:last-child {
+            border-left-color: transparent;
+            padding-bottom: 0;
+        }
 
-    .incidents-timeline {
-      position: relative;
-      padding-left: 2rem;
-    }
+        .timeline-dot {
+            position: absolute;
+            left: -9px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--primary-color);
+        }
 
-    .timeline-item {
-      position: relative;
-      padding-bottom: 2rem;
-      border-left: 2px solid var(--border-color);
-      padding-left: 2rem;
-    }
+        .timeline-dot.success {
+            border-color: var(--success-color);
+        }
 
-    .timeline-item:last-child {
-      border-left-color: transparent;
-      padding-bottom: 0;
-    }
+        .timeline-dot.warning {
+            border-color: var(--warning-color);
+        }
 
-    .timeline-dot {
-      position: absolute;
-      left: -9px;
-      top: 0;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: white;
-      border: 3px solid var(--primary-color);
-    }
+        .timeline-dot.danger {
+            border-color: var(--danger-color);
+        }
 
-    .timeline-dot.success {
-      border-color: var(--success-color);
-    }
+        .timeline-content {
+            background: white;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
 
-    .timeline-dot.warning {
-      border-color: var(--warning-color);
-    }
+        .timeline-content:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
 
-    .timeline-dot.danger {
-      border-color: var(--danger-color);
-    }
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            gap: 1rem;
+        }
 
-    .timeline-content {
-      background: white;
-      padding: 1rem;
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
-    }
+        .timeline-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
 
-    .timeline-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.5rem;
-      gap: 1rem;
-    }
+        .timeline-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
 
-    .timeline-title {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
+        .timeline-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
 
-    .timeline-time {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
 
-    .timeline-description {
-      color: var(--text-secondary);
-      font-size: 0.875rem;
-    }
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-    }
+        .back-button:hover {
+            text-decoration: underline;
+        }
 
-    .back-button {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--primary-color);
-      text-decoration: none;
-      font-weight: 500;
-      margin-bottom: 1rem;
-    }
+        #serviceForm {
+            display: none;
+        }
 
-    .back-button:hover {
-      text-decoration: underline;
-    }
+        #serviceForm.active {
+            display: block;
+        }
 
-    #serviceForm {
-      display: none;
-    }
+        #serviceDisplay {
+            display: block;
+        }
 
-    #serviceForm.active {
-      display: block;
-    }
+        #serviceDisplay.hidden {
+            display: none;
+        }
 
-    #serviceDisplay {
-      display: block;
-    }
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
 
-    #serviceDisplay.hidden {
-      display: none;
-    }
-  </style>
+        .status-indicator.status-up {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-indicator.status-degraded {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-indicator.status-down {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar">
+<!-- Navbar -->
+<nav class="navbar">
     <div class="navbar-container">
-      <div class="navbar-brand">
-        <span class="navbar-logo">🛰️</span>
-        <span class="navbar-title">TracerouteX</span>
-      </div>
-      
-      <div class="navbar-menu">
-        <a href="dashboard.html" class="navbar-link">
-          <span>📊</span> Dashboard
-        </a>
-        <a href="public-status.html" class="navbar-link">
-          <span>🌐</span> Status Page
-        </a>
-        <div class="navbar-divider"></div>
-        <div class="navbar-user">
-          <span class="user-info"></span>
-          <span class="user-role badge"></span>
+        <div class="navbar-brand">
+            <span class="navbar-logo">🛰️</span>
+            <span class="navbar-title">TracerouteX</span>
         </div>
-        <button id="logoutBtn" class="btn btn-secondary btn-sm">
-          Logout
-        </button>
-      </div>
-    </div>
-  </nav>
 
-  <!-- Main Content -->
-  <main class="main-content">
+        <div class="navbar-menu">
+            <a href="dashboard.html" class="navbar-link">
+                <span>📊</span> Dashboard
+            </a>
+            <a href="public-status.html" class="navbar-link">
+                <span>🌐</span> Status Page
+            </a>
+            <div class="navbar-divider"></div>
+            <div class="navbar-user">
+                <span class="user-info"></span>
+                <span class="user-role badge"></span>
+            </div>
+            <button id="logoutBtn" class="btn btn-secondary btn-sm">
+                Logout
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="main-content">
     <div class="container">
-      <a href="dashboard.html" class="back-button">
-        <span>←</span> Back to Dashboard
-      </a>
+        <a href="dashboard.html" class="back-button">
+            <span>←</span> Back to Dashboard
+        </a>
 
-      <!-- Service Display (View Mode) -->
-      <div id="serviceDisplay">
-        <div class="service-detail-header">
-          <div class="service-title-section">
-            <h1 class="service-title">
-              <span id="serviceName">Loading...</span>
-              <span id="serviceStatusBadge"></span>
-            </h1>
-            <div class="service-url-display" id="serviceUrl"></div>
-            <div class="service-description-display" id="serviceDescription"></div>
-          </div>
-          
-          <div class="service-actions" id="adminServiceActions" style="display: none;">
-            <button class="btn btn-primary" id="editServiceBtn">
-              <span>✏️</span> Edit Service
-            </button>
-            <button class="btn btn-danger" id="deleteServiceBtn">
-              <span>🗑️</span> Delete Service
-            </button>
-          </div>
+        <!-- Service Display (View Mode) -->
+        <div id="serviceDisplay">
+            <div class="service-detail-header">
+                <div class="service-title-section">
+                    <h1 class="service-title">
+                        <span id="serviceName">Loading...</span>
+                        <span id="serviceStatusBadge"></span>
+                    </h1>
+                    <div class="service-description-display" id="serviceDescription"></div>
+                    <div class="service-meta">
+                        <div class="service-meta-item">
+                            <span>📅</span>
+                            <span>Created: <strong id="serviceCreatedAt">-</strong></span>
+                        </div>
+                        <div class="service-meta-item">
+                            <span>🔄</span>
+                            <span>Last Updated: <strong id="serviceUpdatedAt">-</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="service-actions" id="adminServiceActions" style="display: none;">
+                    <button class="btn btn-primary" id="editServiceBtn">
+                        <span>✏️</span> Edit Service
+                    </button>
+                    <button class="btn btn-danger" id="deleteServiceBtn">
+                        <span>🗑️</span> Delete Service
+                    </button>
+                </div>
+            </div>
+
+            <!-- Service Info -->
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-card-label">Current Status</div>
+                    <div class="info-card-value">
+                        <span id="currentStatusDisplay" class="status-indicator">-</span>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-label">Active Incidents</div>
+                    <div class="info-card-value" id="activeIncidentsCount">-</div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-label">Total Incidents</div>
+                    <div class="info-card-value" id="totalIncidentsCount">-</div>
+                </div>
+            </div>
+
+            <!-- Related Incidents -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Incident History</h2>
+                    <button class="btn btn-primary btn-sm" id="addIncidentBtn" style="display: none;">
+                        <span>➕</span> Report Incident
+                    </button>
+                </div>
+
+                <div id="incidentsContainer">
+                    <!-- Incidents timeline will be loaded here -->
+                </div>
+            </div>
         </div>
 
-        <!-- Metrics -->
-        <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-card-label">Current Status</div>
-            <div class="metric-card-value" id="currentStatus">-</div>
-          </div>
-          
-          <div class="metric-card">
-            <div class="metric-card-label">Uptime</div>
-            <div class="metric-card-value">
-              <span id="uptimePercentage">-</span>
-              <span class="metric-card-unit">%</span>
+        <!-- Service Form (Edit/Create Mode) -->
+        <div id="serviceForm">
+            <div class="card">
+                <h2 class="card-title" id="formTitle">Create New Service</h2>
+
+                <form id="serviceFormElement">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="name">Service Name *</label>
+                            <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    class="form-input"
+                                    placeholder="e.g., Payment Service"
+                                    required
+                                    minlength="3"
+                                    maxlength="100"
+                            >
+                            <small class="form-hint">Maximum 100 characters</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="status">Status *</label>
+                            <select id="status" name="status" class="form-select" required>
+                                <option value="up">✅ Operational (Up)</option>
+                                <option value="degraded">⚠️ Degraded Performance</option>
+                                <option value="down">🔴 Down</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="description">Description *</label>
+                        <textarea
+                                id="description"
+                                name="description"
+                                class="form-textarea"
+                                placeholder="Describe the service and its purpose..."
+                                required
+                                rows="4"
+                        ></textarea>
+                        <small class="form-hint">Provide a clear description of what this service does</small>
+                    </div>
+
+                    <div class="service-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <span>💾</span> Save Service
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="cancelFormBtn">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
             </div>
-          </div>
-          
-          <div class="metric-card">
-            <div class="metric-card-label">Avg Response Time</div>
-            <div class="metric-card-value">
-              <span id="avgResponseTime">-</span>
-              <span class="metric-card-unit">ms</span>
-            </div>
-          </div>
-          
-          <div class="metric-card">
-            <div class="metric-card-label">Active Incidents</div>
-            <div class="metric-card-value" id="activeIncidentsCount">-</div>
-          </div>
         </div>
-
-        <!-- Uptime Chart -->
-        <div class="card">
-          <h2 class="card-title">Uptime Overview</h2>
-          <div class="uptime-bar">
-            <div class="uptime-bar-fill" id="uptimeBar">
-              <span id="uptimeBarText">-</span>
-            </div>
-          </div>
-          <div class="uptime-details">
-            <span>Last 30 days</span>
-            <span id="uptimeStats">-</span>
-          </div>
-        </div>
-
-        <!-- Related Incidents -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Incident History</h2>
-            <button class="btn btn-primary btn-sm" id="addIncidentBtn" style="display: none;">
-              <span>➕</span> Report Incident
-            </button>
-          </div>
-          
-          <div id="incidentsContainer">
-            <!-- Incidents timeline will be loaded here -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Service Form (Edit/Create Mode) -->
-      <div id="serviceForm">
-        <div class="card">
-          <h2 class="card-title" id="formTitle">Create New Service</h2>
-          
-          <form id="serviceFormElement">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="name">Service Name *</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
-                  class="form-input" 
-                  placeholder="e.g., Payment Service"
-                  required
-                >
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="url">Service URL *</label>
-                <input 
-                  type="url" 
-                  id="url" 
-                  name="url" 
-                  class="form-input" 
-                  placeholder="https://api.example.com/health"
-                  required
-                >
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="description">Description *</label>
-              <textarea 
-                id="description" 
-                name="description" 
-                class="form-textarea" 
-                placeholder="Describe the service..."
-                required
-              ></textarea>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="status">Status *</label>
-                <select id="status" name="status" class="form-select" required>
-                  <option value="operational">✅ Operational</option>
-                  <option value="degraded">⚠️ Degraded Performance</option>
-                  <option value="down">🔴 Down</option>
-                  <option value="maintenance">🔧 Under Maintenance</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="check_interval">Check Interval (seconds)</label>
-                <input 
-                  type="number" 
-                  id="check_interval" 
-                  name="check_interval" 
-                  class="form-input" 
-                  placeholder="60"
-                  min="30"
-                  value="60"
-                >
-              </div>
-            </div>
-
-            <div class="service-actions">
-              <button type="submit" class="btn btn-primary">
-                <span>💾</span> Save Service
-              </button>
-              <button type="button" class="btn btn-secondary" id="cancelFormBtn">
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
-  </main>
+</main>
 
-  <script src="../assets/js/utils.js"></script>
-  <script src="../assets/js/api.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script>
+<script src="../assets/js/utils.js"></script>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
     // Check authentication
     if (!Auth.requireAuth()) {
-      // Redirects to login if not authenticated
+        // Redirects to login if not authenticated
     }
 
     let currentServiceId = null;
+    let currentService = null;
     let isEditMode = false;
     let isCreateMode = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
-      const user = Auth.getUser();
-      Auth.displayUserInfo();
+        const user = Auth.getUser();
+        Auth.displayUserInfo();
 
-      // Parse URL parameters
-      const urlParams = new URLSearchParams(window.location.search);
-      const action = urlParams.get('action');
-      const serviceId = urlParams.get('id');
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        const serviceId = urlParams.get('id');
 
-      // Determine mode
-      if (action === 'create') {
-        isCreateMode = true;
-        showForm();
-      } else if (serviceId) {
-        currentServiceId = parseInt(serviceId);
-        await loadServiceDetails(currentServiceId);
-      } else {
-        Utils.showAlert('Invalid service', 'error');
-        setTimeout(() => window.location.href = 'dashboard.html', 2000);
-      }
-
-      // Show admin/operator controls
-      if (Auth.hasRole('admin', 'operator')) {
-        document.getElementById('adminServiceActions').style.display = 'flex';
-        document.getElementById('addIncidentBtn').style.display = 'inline-flex';
-      }
-
-      // Logout handler
-      document.getElementById('logoutBtn').addEventListener('click', async () => {
-        try {
-          await API.logout();
-          Auth.logout();
-        } catch (error) {
-          Auth.logout();
-        }
-      });
-
-      // Edit button
-      document.getElementById('editServiceBtn')?.addEventListener('click', () => {
-        isEditMode = true;
-        showForm();
-        populateForm();
-      });
-
-      // Delete button
-      document.getElementById('deleteServiceBtn')?.addEventListener('click', async () => {
-        if (confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
-          await deleteService();
-        }
-      });
-
-      // Cancel form button
-      document.getElementById('cancelFormBtn').addEventListener('click', () => {
-        if (isCreateMode) {
-          window.location.href = 'dashboard.html';
+        // Determine mode
+        if (action === 'create') {
+            if (!Auth.hasRole('admin')) {
+                Utils.showAlert('Only admins can create services', 'error');
+                setTimeout(() => window.location.href = 'dashboard.html', 2000);
+                return;
+            }
+            isCreateMode = true;
+            showForm();
+        } else if (serviceId) {
+            currentServiceId = parseInt(serviceId);
+            await loadServiceDetails(currentServiceId);
         } else {
-          isEditMode = false;
-          showDisplay();
+            Utils.showAlert('Invalid service', 'error');
+            setTimeout(() => window.location.href = 'dashboard.html', 2000);
         }
-      });
 
-      // Form submit
-      document.getElementById('serviceFormElement').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await saveService();
-      });
+        // Show admin controls (only admin can edit/delete services)
+        if (Auth.hasRole('admin')) {
+            document.getElementById('adminServiceActions').style.display = 'flex';
+        }
 
-      // Add incident button
-      document.getElementById('addIncidentBtn')?.addEventListener('click', () => {
-        window.location.href = `incident-detail.html?action=create&service_id=${currentServiceId}`;
-      });
+        // Show add incident button for engineers and admins
+        if (Auth.hasRole('engineer', 'admin')) {
+            document.getElementById('addIncidentBtn').style.display = 'inline-flex';
+        }
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await API.logout();
+                Auth.logout();
+            } catch (error) {
+                Auth.logout();
+            }
+        });
+
+        // Edit button
+        document.getElementById('editServiceBtn')?.addEventListener('click', () => {
+            isEditMode = true;
+            showForm();
+            populateForm();
+        });
+
+        // Delete button
+        document.getElementById('deleteServiceBtn')?.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to delete this service? This will also delete all related incidents. This action cannot be undone.')) {
+                await deleteService();
+            }
+        });
+
+        // Cancel form button
+        document.getElementById('cancelFormBtn').addEventListener('click', () => {
+            if (isCreateMode) {
+                window.location.href = 'dashboard.html';
+            } else {
+                isEditMode = false;
+                showDisplay();
+            }
+        });
+
+        // Form submit
+        document.getElementById('serviceFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveService();
+        });
+
+        // Add incident button
+        document.getElementById('addIncidentBtn')?.addEventListener('click', () => {
+            window.location.href = `incident-detail.html?action=create&service_id=${currentServiceId}`;
+        });
     });
 
     async function loadServiceDetails(serviceId) {
-      try {
-        Utils.showLoading(document.getElementById('serviceDisplay'));
+        try {
+            Utils.showLoading(document.getElementById('serviceDisplay'));
 
-        const data = await API.getServiceById(serviceId);
-        const service = data.service;
+            const response = await API.getServiceById(serviceId);
+            currentService = response.data.service;
 
-        // Update page title
-        document.title = `${service.name} | TracerouteX`;
+            // Update page title
+            document.title = `${currentService.name} | TracerouteX`;
 
-        // Display service info
-        document.getElementById('serviceName').textContent = service.name;
-        document.getElementById('serviceUrl').textContent = service.url;
-        document.getElementById('serviceDescription').textContent = service.description;
-        
-        const statusBadge = `<span class="badge badge-${getStatusBadgeClass(service.status)}">${Utils.translateStatus(service.status)}</span>`;
-        document.getElementById('serviceStatusBadge').innerHTML = statusBadge;
+            // Display service info
+            document.getElementById('serviceName').textContent = currentService.name;
+            document.getElementById('serviceDescription').textContent = currentService.description || 'No description provided';
 
-        // Update metrics
-        document.getElementById('currentStatus').textContent = Utils.translateStatus(service.status);
-        document.getElementById('uptimePercentage').textContent = service.uptime_percentage.toFixed(2);
-        document.getElementById('avgResponseTime').textContent = service.response_time_avg || 0;
+            const statusBadge = `<span class="badge badge-${getStatusBadgeClass(currentService.status)}">${Utils.translateStatus(currentService.status)}</span>`;
+            document.getElementById('serviceStatusBadge').innerHTML = statusBadge;
 
-        // Update uptime bar
-        const uptimeBar = document.getElementById('uptimeBar');
-        uptimeBar.style.width = service.uptime_percentage + '%';
-        document.getElementById('uptimeBarText').textContent = service.uptime_percentage.toFixed(2) + '%';
+            // Display meta info
+            document.getElementById('serviceCreatedAt').textContent = Utils.formatDateTime(currentService.created_at);
+            document.getElementById('serviceUpdatedAt').textContent = Utils.formatRelativeTime(currentService.updated_at);
 
-        // Uptime stats
-        const downtime = (100 - service.uptime_percentage).toFixed(2);
-        document.getElementById('uptimeStats').textContent = `${downtime}% downtime`;
+            // Update current status display
+            const statusDisplay = document.getElementById('currentStatusDisplay');
+            statusDisplay.textContent = Utils.translateStatus(currentService.status);
+            statusDisplay.className = `status-indicator status-${currentService.status}`;
 
-        // Load related incidents
-        await loadServiceIncidents(serviceId);
+            // Load related incidents
+            await loadServiceIncidents(serviceId);
 
-        Utils.hideLoading();
+            Utils.hideLoading();
 
-      } catch (error) {
-        Utils.hideLoading();
-        Utils.showAlert('Error loading service details: ' + error.message, 'error');
-      }
+        } catch (error) {
+            Utils.hideLoading();
+            Utils.showAlert('Error loading service details: ' + error.message, 'error');
+            setTimeout(() => window.location.href = 'dashboard.html', 2000);
+        }
     }
 
     async function loadServiceIncidents(serviceId) {
-      try {
-        const data = await API.getIncidents();
-        const incidents = data.incidents.filter(inc => inc.service_id === serviceId);
+        try {
+            const response = await API.getIncidents({ service_id: serviceId });
+            const incidents = response.data.incidents;
 
-        const container = document.getElementById('incidentsContainer');
+            const container = document.getElementById('incidentsContainer');
 
-        // Update active incidents count
-        const activeCount = incidents.filter(i => i.status !== 'resolved').length;
-        document.getElementById('activeIncidentsCount').textContent = activeCount;
+            // Update incident counts
+            const activeCount = incidents.filter(i => i.status === 'open').length;
+            document.getElementById('activeIncidentsCount').textContent = activeCount;
+            document.getElementById('totalIncidentsCount').textContent = incidents.length;
 
-        if (incidents.length === 0) {
-          container.innerHTML = `
+            if (incidents.length === 0) {
+                container.innerHTML = `
             <div class="empty-state">
               <div class="empty-state-icon">🎉</div>
               <div class="empty-state-text">No incidents reported</div>
               <div class="empty-state-subtext">This service has been running smoothly</div>
             </div>
           `;
-          return;
-        }
+                return;
+            }
 
-        // Sort by date (newest first)
-        incidents.sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
+            // Sort by date (newest first)
+            incidents.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-        container.innerHTML = `
+            container.innerHTML = `
           <div class="incidents-timeline">
             ${incidents.map(incident => `
               <div class="timeline-item">
@@ -572,7 +551,7 @@
                 <div class="timeline-content" onclick="window.location.href='incident-detail.html?id=${incident.id}'">
                   <div class="timeline-header">
                     <div class="timeline-title">${incident.title}</div>
-                    <div class="timeline-time">${Utils.formatRelativeTime(incident.started_at)}</div>
+                    <div class="timeline-time">${Utils.formatRelativeTime(incident.created_at)}</div>
                   </div>
                   <div style="margin-bottom: 0.5rem;">
                     <span class="badge badge-${getSeverityBadgeClass(incident.severity)}">
@@ -581,129 +560,127 @@
                     <span class="badge badge-${getStatusBadgeClass(incident.status)}">
                       ${Utils.translateStatus(incident.status)}
                     </span>
+                    ${incident.is_published ? '<span class="badge badge-info">Published</span>' : ''}
                   </div>
-                  <div class="timeline-description">${incident.description}</div>
+                  <div class="timeline-description">${Utils.truncate(incident.description, 120)}</div>
                 </div>
               </div>
             `).join('')}
           </div>
         `;
 
-      } catch (error) {
-        console.error('Error loading incidents:', error);
-      }
+        } catch (error) {
+            console.error('Error loading incidents:', error);
+            document.getElementById('activeIncidentsCount').textContent = '0';
+            document.getElementById('totalIncidentsCount').textContent = '0';
+        }
     }
 
     function showForm() {
-      document.getElementById('serviceDisplay').classList.add('hidden');
-      document.getElementById('serviceForm').classList.add('active');
-      document.getElementById('formTitle').textContent = isCreateMode ? 'Create New Service' : 'Edit Service';
+        document.getElementById('serviceDisplay').classList.add('hidden');
+        document.getElementById('serviceForm').classList.add('active');
+        document.getElementById('formTitle').textContent = isCreateMode ? 'Create New Service' : 'Edit Service';
     }
 
     function showDisplay() {
-      document.getElementById('serviceForm').classList.remove('active');
-      document.getElementById('serviceDisplay').classList.remove('hidden');
+        document.getElementById('serviceForm').classList.remove('active');
+        document.getElementById('serviceDisplay').classList.remove('hidden');
     }
 
     function populateForm() {
-      // This will be populated from the loaded service data
-      const service = {
-        name: document.getElementById('serviceName').textContent,
-        url: document.getElementById('serviceUrl').textContent,
-        description: document.getElementById('serviceDescription').textContent,
-        status: document.getElementById('currentStatus').textContent
-      };
+        if (!currentService) return;
 
-      document.getElementById('name').value = service.name;
-      document.getElementById('url').value = service.url;
-      document.getElementById('description').value = service.description;
-      
-      // Map status back to select value
-      const statusMap = {
-        'Operational': 'operational',
-        'Degraded Performance': 'degraded',
-        'Down': 'down',
-        'Under Maintenance': 'maintenance'
-      };
-      document.getElementById('status').value = statusMap[service.status] || 'operational';
+        document.getElementById('name').value = currentService.name;
+        document.getElementById('description').value = currentService.description || '';
+        document.getElementById('status').value = currentService.status;
     }
 
     async function saveService() {
-      const formData = {
-        name: document.getElementById('name').value.trim(),
-        url: document.getElementById('url').value.trim(),
-        description: document.getElementById('description').value.trim(),
-        status: document.getElementById('status').value,
-        check_interval: parseInt(document.getElementById('check_interval').value) || 60
-      };
+        const formData = {
+            name: document.getElementById('name').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            status: document.getElementById('status').value
+        };
 
-      const submitBtn = document.querySelector('#serviceFormElement button[type="submit"]');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Saving...';
-
-      try {
-        if (isCreateMode) {
-          const response = await API.createService(formData);
-          Utils.showAlert('Service created successfully!', 'success');
-          setTimeout(() => {
-            window.location.href = `service-detail.html?id=${response.service.id}`;
-          }, 1500);
-        } else {
-          await API.updateService(currentServiceId, formData);
-          Utils.showAlert('Service updated successfully!', 'success');
-          isEditMode = false;
-          await loadServiceDetails(currentServiceId);
-          showDisplay();
+        // Validation
+        if (!formData.name || formData.name.length < 3) {
+            Utils.showAlert('Service name must be at least 3 characters', 'error');
+            return;
         }
-      } catch (error) {
-        Utils.showAlert('Error saving service: ' + error.message, 'error');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = isCreateMode ? 'Create Service' : 'Save Changes';
-      }
+
+        if (!formData.description) {
+            Utils.showAlert('Please provide a service description', 'error');
+            return;
+        }
+
+        const submitBtn = document.querySelector('#serviceFormElement button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>⏳</span> Saving...';
+
+        try {
+            if (isCreateMode) {
+                const response = await API.createService(formData);
+                Utils.showAlert('Service created successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = `service-detail.html?id=${response.data.service.id}`;
+                }, 1500);
+            } else {
+                await API.updateService(currentServiceId, formData);
+                Utils.showAlert('Service updated successfully!', 'success');
+                isEditMode = false;
+                await loadServiceDetails(currentServiceId);
+                showDisplay();
+            }
+        } catch (error) {
+            Utils.showAlert('Error saving service: ' + error.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>💾</span> Save Service';
+        }
     }
 
     async function deleteService() {
-      try {
-        await API.deleteService(currentServiceId);
-        Utils.showAlert('Service deleted successfully!', 'success');
-        setTimeout(() => {
-          window.location.href = 'dashboard.html';
-        }, 1500);
-      } catch (error) {
-        Utils.showAlert('Error deleting service: ' + error.message, 'error');
-      }
+        try {
+            await API.deleteService(currentServiceId);
+            Utils.showAlert('Service deleted successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1500);
+        } catch (error) {
+            Utils.showAlert('Error deleting service: ' + error.message, 'error');
+        }
     }
 
     function getStatusBadgeClass(status) {
-      const classes = {
-        'operational': 'success',
-        'degraded': 'warning',
-        'down': 'danger',
-        'maintenance': 'info'
-      };
-      return classes[status] || 'info';
+        const classes = {
+            'up': 'success',
+            'degraded': 'warning',
+            'down': 'danger',
+            'open': 'warning',
+            'resolved': 'success'
+        };
+        return classes[status] || 'info';
     }
 
     function getSeverityBadgeClass(severity) {
-      const classes = {
-        'low': 'info',
-        'medium': 'warning',
-        'high': 'danger',
-        'critical': 'danger'
-      };
-      return classes[severity] || 'info';
+        const classes = {
+            'low': 'info',
+            'medium': 'warning',
+            'high': 'danger',
+            'critical': 'danger'
+        };
+        return classes[severity] || 'info';
     }
 
     function getSeverityDotClass(severity) {
-      const classes = {
-        'low': 'success',
-        'medium': 'warning',
-        'high': 'danger',
-        'critical': 'danger'
-      };
-      return classes[severity] || '';
+        const classes = {
+            'low': 'success',
+            'medium': 'warning',
+            'high': 'danger',
+            'critical': 'danger'
+        };
+        return classes[severity] || '';
     }
-  </script>
+</script>
 </body>
 </html>

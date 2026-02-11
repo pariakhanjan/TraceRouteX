@@ -7,6 +7,6 @@ const router = express.Router();
 
 router.get('/', authenticate, getAllServices);
 router.post('/', authenticate, authorize('admin'), createService);
-router.patch('/:id/status', authenticate, authorize('operator', 'admin'), updateServiceStatus);
+router.patch('/:id/status', authenticate, authorize('engineer', 'admin'), updateServiceStatus);
 
 export default router;

@@ -1,177 +1,486 @@
-// =========================================
-// UTILITY FUNCTIONS
-// =========================================
+// utils.js - Utility functions
 
 const Utils = {
-  // Display message to user
-  showAlert(message, type = 'info', duration = 3000) {
-    const alertContainer = document.getElementById('alert-container') || this.createAlertContainer();
-    
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type}`;
-    alert.textContent = message;
-    alert.style.animation = 'slideInDown 0.3s ease-out';
-    
-    alertContainer.appendChild(alert);
-    
-    setTimeout(() => {
-      alert.style.animation = 'slideOutUp 0.3s ease-in';
-      setTimeout(() => alert.remove(), 300);
-    }, duration);
-  },
+    // ==========================================
+    // Alert System
+    // ==========================================
 
-  createAlertContainer() {
-    const container = document.createElement('div');
-    container.id = 'alert-container';
-    container.style.cssText = `
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      width: 90%;
-      max-width: 500px;
+    showAlert(message, type = 'info') {
+        // Remove existing alerts
+        const existingAlert = document.querySelector('.alert-toast');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert-toast alert-${type}`;
+
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
+        };
+
+        alertDiv.innerHTML = `
+      <span class="alert-icon">${icons[type] || icons.info}</span>
+      <span class="alert-message">${message}</span>
+      <button class="alert-close" onclick="this.parentElement.remove()">×</button>
     `;
-    document.body.appendChild(container);
-    return container;
-  },
 
-  // Format Persian date
-  formatPersianDate(date) {
-    const d = new Date(date);
-    return new Intl.DateTimeFormat('fa-IR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(d);
-  },
+        document.body.appendChild(alertDiv);
 
-  // Format relative time (e.g., "5 minutes ago")
-  formatRelativeTime(date) {
-    const diff = Date.now() - new Date(date).getTime();
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentElement) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    },
 
-    if (seconds < 60) return 'Just now';
-    if (minutes < 60) return `${minutes} minutes ago`;
-    if (hours < 24) return `${hours} hours ago`;
-    return `${days} days ago`;
-  },
+    // ==========================================
+    // Loading States
+    // ==========================================
 
-  // Validate Email
-  validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  },
+    showLoading(element) {
+        if (!element) return;
 
-  // Validate Password (minimum 6 characters)
-  validatePassword(password) {
-    return password.length >= 6;
-  },
+        element.innerHTML = `
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading...</div>
+      </div>
+    `;
+    },
 
-  // Show/Hide Loading Spinner
-  showLoading(container) {
-    const spinner = document.createElement('div');
-    spinner.className = 'spinner';
-    spinner.id = 'loading-spinner';
-    container.appendChild(spinner);
-  },
+    hideLoading() {
+        const loadingElements = document.querySelectorAll('.loading-state');
+        loadingElements.forEach(el => el.remove());
+    },
 
-  hideLoading() {
-    const spinner = document.getElementById('loading-spinner');
-    if (spinner) spinner.remove();
-  },
+    // ==========================================
+    // Date/Time Formatting
+    // ==========================================
 
-  // Translate Status to English
-  translateStatus(status) {
-    const translations = {
-      'operational': 'Operational',
-      'degraded': 'Degraded Performance',
-      'down': 'Down',
-      'maintenance': 'Under Maintenance',
-      'investigating': 'Investigating',
-      'identified': 'Identified',
-      'monitoring': 'Monitoring',
-      'resolved': 'Resolved',
-      'low': 'Low',
-      'medium': 'Medium',
-      'high': 'High',
-      'critical': 'Critical'
-    };
-    return translations[status] || status;
-  },
+    formatPersianDate(dateString) {
+        if (!dateString) return '-';
 
-  // Translate Role to English
-  translateRole(role) {
-    const translations = {
-      'admin': 'Administrator',
-      'operator': 'Operator',
-      'user': 'User'
-    };
-    return translations[role] || role;
-  },
+        const date = new Date(dateString);
 
-  // Badge color based on Status
-  getStatusBadgeClass(status) {
-    const classes = {
-      'operational': 'badge-success',
-      'degraded': 'badge-warning',
-      'down': 'badge-danger',
-      'maintenance': 'badge-info',
-      'resolved': 'badge-success',
-      'investigating': 'badge-warning',
-      'identified': 'badge-info',
-      'monitoring': 'badge-warning'
-    };
-    return classes[status] || 'badge-info';
-  },
+        // Simple Persian date formatting (you can use a library like moment-jalaali for accurate conversion)
+        const options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
 
-  // Debounce for Search
-  debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  },
+        return date.toLocaleString('fa-IR', options);
+    },
 
-  // Copy to Clipboard
-  copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-      this.showAlert('Copied!', 'success', 1500);
-    });
-  },
+    formatRelativeTime(dateString) {
+        if (!dateString) return '-';
 
-  // Format relative time (e.g., "2 hours ago")
-  formatRelativeTime(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
-  }
+        if (diffInSeconds < 60) {
+            return 'just now';
+        } else if (diffInSeconds < 3600) {
+            const minutes = Math.floor(diffInSeconds / 60);
+            return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+        } else if (diffInSeconds < 86400) {
+            const hours = Math.floor(diffInSeconds / 3600);
+            return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        } else if (diffInSeconds < 2592000) {
+            const days = Math.floor(diffInSeconds / 86400);
+            return `${days} day${days > 1 ? 's' : ''} ago`;
+        } else {
+            return this.formatPersianDate(dateString);
+        }
+    },
 
+    formatDateTime(dateString) {
+        if (!dateString) return '-';
+
+        const date = new Date(dateString);
+        const options = {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+
+        return date.toLocaleString('en-US', options);
+    },
+
+    // ==========================================
+    // Validation
+    // ==========================================
+
+    validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    },
+
+    validatePassword(password) {
+        return password && password.length >= 8;
+    },
+
+    validateUsername(username) {
+        // 3-50 characters, alphanumeric and underscores only
+        const usernameRegex = /^[a-zA-Z0-9_]{3,50}$/;
+        return usernameRegex.test(username);
+    },
+
+    // ==========================================
+    // Translations (matching database ENUM values)
+    // ==========================================
+
+    translateStatus(status) {
+        const translations = {
+            // Service statuses (matching service_status ENUM)
+            'up': 'Operational',
+            'degraded': 'Degraded Performance',
+            'down': 'Down',
+
+            // Incident statuses (matching incident_status ENUM)
+            'open': 'Open',
+            'resolved': 'Resolved',
+
+            // Incident severities (matching incident_severity ENUM)
+            'low': 'Low',
+            'medium': 'Medium',
+            'high': 'High',
+            'critical': 'Critical',
+
+            // User roles (matching user_role ENUM)
+            'viewer': 'Viewer',
+            'engineer': 'Engineer',
+            'admin': 'Administrator'
+        };
+
+        return translations[status] || status;
+    },
+
+    translateRole(role) {
+        return this.translateStatus(role);
+    },
+
+    // ==========================================
+    // Badge Classes
+    // ==========================================
+
+    getStatusBadgeClass(status) {
+        const classes = {
+            // Service statuses
+            'up': 'success',
+            'degraded': 'warning',
+            'down': 'danger',
+
+            // Incident statuses
+            'open': 'warning',
+            'resolved': 'success',
+
+            // Incident severities
+            'low': 'info',
+            'medium': 'warning',
+            'high': 'danger',
+            'critical': 'danger'
+        };
+
+        return classes[status] || 'info';
+    },
+
+    getSeverityBadgeClass(severity) {
+        return this.getStatusBadgeClass(severity);
+    },
+
+    getRoleBadgeClass(role) {
+        const classes = {
+            'viewer': 'info',
+            'engineer': 'warning',
+            'admin': 'danger'
+        };
+
+        return classes[role] || 'info';
+    },
+
+    // ==========================================
+    // String Helpers
+    // ==========================================
+
+    truncate(str, maxLength = 100) {
+        if (!str) return '';
+        if (str.length <= maxLength) return str;
+        return str.substring(0, maxLength) + '...';
+    },
+
+    capitalize(str) {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    },
+
+    // ==========================================
+    // URL Helpers
+    // ==========================================
+
+    getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    },
+
+    setQueryParam(param, value) {
+        const url = new URL(window.location);
+        url.searchParams.set(param, value);
+        window.history.pushState({}, '', url);
+    },
+
+    // ==========================================
+    // Confirmation Dialogs
+    // ==========================================
+
+    confirm(message) {
+        return window.confirm(message);
+    },
+
+    // ==========================================
+    // Copy to Clipboard
+    // ==========================================
+
+    async copyToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            this.showAlert('Copied to clipboard!', 'success');
+            return true;
+        } catch (error) {
+            this.showAlert('Failed to copy', 'error');
+            return false;
+        }
+    },
+
+    // ==========================================
+    // Debounce
+    // ==========================================
+
+    debounce(func, wait = 300) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    },
+
+    // ==========================================
+    // Local Storage Helpers
+    // ==========================================
+
+    storage: {
+        set(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (error) {
+                console.error('Storage set error:', error);
+                return false;
+            }
+        },
+
+        get(key, defaultValue = null) {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : defaultValue;
+            } catch (error) {
+                console.error('Storage get error:', error);
+                return defaultValue;
+            }
+        },
+
+        remove(key) {
+            try {
+                localStorage.removeItem(key);
+                return true;
+            } catch (error) {
+                console.error('Storage remove error:', error);
+                return false;
+            }
+        },
+
+        clear() {
+            try {
+                localStorage.clear();
+                return true;
+            } catch (error) {
+                console.error('Storage clear error:', error);
+                return false;
+            }
+        }
+    },
+
+    // ==========================================
+    // Data Formatting
+    // ==========================================
+
+    formatNumber(num) {
+        if (num === null || num === undefined) return '-';
+        return new Intl.NumberFormat('en-US').format(num);
+    },
+
+    formatPercentage(num, decimals = 2) {
+        if (num === null || num === undefined) return '-';
+        return num.toFixed(decimals) + '%';
+    },
+
+    formatBytes(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        if (!bytes) return '-';
+
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
 };
 
-// Export for use in other files
-window.Utils = Utils;
+// Add CSS for alerts dynamically
+if (!document.querySelector('#utils-styles')) {
+    const style = document.createElement('style');
+    style.id = 'utils-styles';
+    style.textContent = `
+    .alert-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      min-width: 300px;
+      max-width: 500px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 9999;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .alert-toast.alert-success {
+      border-left: 4px solid #10b981;
+    }
+
+    .alert-toast.alert-error {
+      border-left: 4px solid #ef4444;
+    }
+
+    .alert-toast.alert-warning {
+      border-left: 4px solid #f59e0b;
+    }
+
+    .alert-toast.alert-info {
+      border-left: 4px solid #3b82f6;
+    }
+
+    .alert-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .alert-message {
+      flex: 1;
+      color: #1f2937;
+      font-size: 0.875rem;
+    }
+
+    .alert-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #9ca3af;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .alert-close:hover {
+      color: #6b7280;
+    }
+
+    .loading-state {
+      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f4f6;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+
+    .empty-state {
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state-text {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state-subtext {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  `;
+    document.head.appendChild(style);
+}

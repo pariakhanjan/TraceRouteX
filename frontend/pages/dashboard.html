@@ -1,317 +1,404 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | TracerouteX</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
-  <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | TracerouteX</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar">
+<!-- Navbar -->
+<nav class="navbar">
     <div class="navbar-container">
-      <div class="navbar-brand">
-        <span class="navbar-logo">🛰️</span>
-        <span class="navbar-title">TracerouteX</span>
-      </div>
-      
-      <div class="navbar-menu">
-        <a href="dashboard.html" class="navbar-link active">
-          <span>📊</span> Dashboard
-        </a>
-        <a href="public-status.html" class="navbar-link">
-          <span>🌐</span> Status Page
-        </a>
-        <div class="navbar-divider"></div>
-        <div class="navbar-user">
-          <span class="user-info"></span>
-          <span class="user-role badge"></span>
+        <div class="navbar-brand">
+            <span class="navbar-logo">🛰️</span>
+            <span class="navbar-title">TracerouteX</span>
         </div>
-        <button id="logoutBtn" class="btn btn-secondary btn-sm">
-          Logout
-        </button>
-      </div>
-    </div>
-  </nav>
 
-  <!-- Main Content -->
-  <main class="main-content">
+        <div class="navbar-menu">
+            <a href="dashboard.html" class="navbar-link active">
+                <span>📊</span> Dashboard
+            </a>
+            <a href="public-status.html" class="navbar-link">
+                <span>🌐</span> Status Page
+            </a>
+            <div class="navbar-divider"></div>
+            <div class="navbar-user">
+                <span class="user-info"></span>
+                <span class="user-role badge"></span>
+            </div>
+            <button id="logoutBtn" class="btn btn-secondary btn-sm">
+                Logout
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="main-content">
     <div class="container">
-      <!-- Header -->
-      <div class="dashboard-header">
-        <div>
-          <h1 class="page-title">Dashboard</h1>
-          <p class="page-subtitle">Overview of all services and recent incidents</p>
-        </div>
-        <div class="dashboard-actions" id="adminActions" style="display: none;">
-          <button class="btn btn-primary" onclick="window.location.href='admin-users.html'">
-            <span>👥</span> Manage Users
-          </button>
-        </div>
-      </div>
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">System Dashboard</h1>
+                <p class="page-subtitle">Monitor all services and incidents in real-time</p>
+            </div>
 
-      <!-- Statistics Cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-primary">📊</div>
-          <div class="stat-content">
-            <div class="stat-label">Total Services</div>
-            <div class="stat-value" id="totalServices">0</div>
-          </div>
+            <div class="page-actions" id="adminActions" style="display: none;">
+                <button class="btn btn-primary" onclick="window.location.href='service-detail.html?action=create'">
+                    <span>➕</span> Add Service
+                </button>
+                <button class="btn btn-secondary" onclick="window.location.href='incident-detail.html?action=create'">
+                    <span>🚨</span> Report Incident
+                </button>
+            </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-success">✅</div>
-          <div class="stat-content">
-            <div class="stat-label">Operational</div>
-            <div class="stat-value" id="operationalServices">0</div>
-          </div>
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card stat-success">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="operationalCount">-</div>
+                    <div class="stat-label">Operational</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-warning">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="degradedCount">-</div>
+                    <div class="stat-label">Degraded</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-danger">
+                <div class="stat-icon">🔴</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="downCount">-</div>
+                    <div class="stat-label">Down</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-info">
+                <div class="stat-icon">🚨</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="activeIncidentsCount">-</div>
+                    <div class="stat-label">Active Incidents</div>
+                </div>
+            </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-warning">⚠️</div>
-          <div class="stat-content">
-            <div class="stat-label">Degraded</div>
-            <div class="stat-value" id="degradedServices">0</div>
-          </div>
+        <!-- Services Section -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Services Overview</h2>
+                <div class="card-actions">
+                    <select id="statusFilter" class="form-select form-select-sm">
+                        <option value="">All Statuses</option>
+                        <option value="up">Operational</option>
+                        <option value="degraded">Degraded</option>
+                        <option value="down">Down</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="servicesContainer">
+                <!-- Services will be loaded here -->
+            </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-danger">🚨</div>
-          <div class="stat-content">
-            <div class="stat-label">Active Incidents</div>
-            <div class="stat-value" id="activeIncidents">0</div>
-          </div>
-        </div>
-      </div>
+        <!-- Recent Incidents -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Recent Incidents</h2>
+                <div class="card-actions">
+                    <select id="incidentStatusFilter" class="form-select form-select-sm">
+                        <option value="">All Statuses</option>
+                        <option value="open">Open</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                    <select id="incidentSeverityFilter" class="form-select form-select-sm">
+                        <option value="">All Severities</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </div>
+            </div>
 
-      <!-- Services Section -->
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Services</h2>
-          <button class="btn btn-primary btn-sm" id="addServiceBtn" style="display: none;">
-            <span>➕</span> Add Service
-          </button>
+            <div id="incidentsContainer">
+                <!-- Incidents will be loaded here -->
+            </div>
         </div>
-        
-        <div id="servicesContainer">
-          <!-- Services will be loaded here -->
-        </div>
-      </div>
-
-      <!-- Recent Incidents -->
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Recent Incidents</h2>
-          <button class="btn btn-primary btn-sm" id="addIncidentBtn" style="display: none;">
-            <span>➕</span> Report Incident
-          </button>
-        </div>
-        
-        <div id="incidentsContainer">
-          <!-- Incidents will be loaded here -->
-        </div>
-      </div>
     </div>
-  </main>
+</main>
 
-  <script src="../assets/js/utils.js"></script>
-  <script src="../assets/js/api.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/app.js"></script>
-  <script>
+<script src="../assets/js/utils.js"></script>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
     // Check authentication
     if (!Auth.requireAuth()) {
-      // Redirects to login if not authenticated
+        // Redirects to login if not authenticated
     }
 
-    // Initialize dashboard
+    let services = [];
+    let incidents = [];
+
     document.addEventListener('DOMContentLoaded', async () => {
-      const user = Auth.getUser();
-      
-      // Display user info
-      Auth.displayUserInfo();
-      
-      // Show admin/operator controls
-      if (Auth.hasRole('admin', 'operator')) {
-        document.getElementById('adminActions').style.display = 'flex';
-        document.getElementById('addServiceBtn').style.display = 'inline-flex';
-        document.getElementById('addIncidentBtn').style.display = 'inline-flex';
-      }
+        const user = Auth.getUser();
+        Auth.displayUserInfo();
 
-      // Load data
-      await loadDashboardData();
-
-      // Logout handler
-      document.getElementById('logoutBtn').addEventListener('click', async () => {
-        try {
-          await API.logout();
-          Auth.logout();
-        } catch (error) {
-          Auth.logout();
+        // Show admin actions if user is admin or engineer
+        if (Auth.hasRole('admin', 'engineer')) {
+            document.getElementById('adminActions').style.display = 'flex';
         }
-      });
 
-      // Add Service button
-      document.getElementById('addServiceBtn')?.addEventListener('click', () => {
-        window.location.href = 'service-detail.html?action=create';
-      });
+        // Load data
+        await Promise.all([
+            loadServices(),
+            loadIncidents()
+        ]);
 
-      // Add Incident button
-      document.getElementById('addIncidentBtn')?.addEventListener('click', () => {
-        window.location.href = 'incident-detail.html?action=create';
-      });
+        // Setup event listeners
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await API.logout();
+                Auth.logout();
+            } catch (error) {
+                Auth.logout();
+            }
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', renderServices);
+        document.getElementById('incidentStatusFilter').addEventListener('change', renderIncidents);
+        document.getElementById('incidentSeverityFilter').addEventListener('change', renderIncidents);
     });
 
-    async function loadDashboardData() {
-      try {
-        // Show loading
-        Utils.showLoading(document.getElementById('servicesContainer'));
-        Utils.showLoading(document.getElementById('incidentsContainer'));
+    async function loadServices() {
+        try {
+            Utils.showLoading(document.getElementById('servicesContainer'));
 
-        // Load services
-        const servicesData = await API.getServices();
-        const services = servicesData.services;
+            const response = await API.getServices();
+            services = response.data.services;
 
-        // Load incidents
-        const incidentsData = await API.getIncidents();
-        const incidents = incidentsData.incidents;
+            updateStats();
+            renderServices();
 
-        // Update statistics
-        updateStatistics(services, incidents);
-
-        // Render services
-        renderServices(services);
-
-        // Render incidents
-        renderIncidents(incidents);
-
-        // Hide loading
-        Utils.hideLoading();
-
-      } catch (error) {
-        Utils.hideLoading();
-        Utils.showAlert('Error loading dashboard data: ' + error.message, 'error');
-      }
+            Utils.hideLoading();
+        } catch (error) {
+            Utils.hideLoading();
+            Utils.showAlert('Error loading services: ' + error.message, 'error');
+        }
     }
 
-    function updateStatistics(services, incidents) {
-      const totalServices = services.length;
-      const operational = services.filter(s => s.status === 'operational').length;
-      const degraded = services.filter(s => s.status === 'degraded').length;
-      const activeIncidents = incidents.filter(i => i.status !== 'resolved').length;
+    async function loadIncidents() {
+        try {
+            Utils.showLoading(document.getElementById('incidentsContainer'));
 
-      document.getElementById('totalServices').textContent = totalServices;
-      document.getElementById('operationalServices').textContent = operational;
-      document.getElementById('degradedServices').textContent = degraded;
-      document.getElementById('activeIncidents').textContent = activeIncidents;
+            const response = await API.getIncidents();
+            incidents = response.data.incidents;
+
+            renderIncidents();
+
+            Utils.hideLoading();
+        } catch (error) {
+            Utils.hideLoading();
+            Utils.showAlert('Error loading incidents: ' + error.message, 'error');
+        }
     }
 
-    function renderServices(services) {
-      const container = document.getElementById('servicesContainer');
-      
-      if (services.length === 0) {
-        container.innerHTML = `
+    function updateStats() {
+        const operational = services.filter(s => s.status === 'up').length;
+        const degraded = services.filter(s => s.status === 'degraded').length;
+        const down = services.filter(s => s.status === 'down').length;
+        const activeIncidents = incidents.filter(i => i.status === 'open').length;
+
+        document.getElementById('operationalCount').textContent = operational;
+        document.getElementById('degradedCount').textContent = degraded;
+        document.getElementById('downCount').textContent = down;
+        document.getElementById('activeIncidentsCount').textContent = activeIncidents;
+    }
+
+    function renderServices() {
+        const container = document.getElementById('servicesContainer');
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        let filtered = services;
+        if (statusFilter) {
+            filtered = services.filter(s => s.status === statusFilter);
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
           <div class="empty-state">
-            <div class="empty-state-icon">📊</div>
-            <div class="empty-state-text">No services yet</div>
-            <div class="empty-state-subtext">Add your first service to start monitoring</div>
+            <div class="empty-state-icon">📦</div>
+            <div class="empty-state-text">No services found</div>
+            <div class="empty-state-subtext">Start by adding your first service</div>
           </div>
         `;
-        return;
-      }
+            return;
+        }
 
-      container.innerHTML = `
-        <div class="services-list">
-          ${services.map(service => `
-            <div class="service-item" onclick="window.location.href='service-detail.html?id=${service.id}'">
-              <div class="service-info">
-                <div class="service-name">${service.name}</div>
-                <div class="service-description">${service.description}</div>
-                <div class="service-url">${service.url}</div>
-              </div>
-              <div class="service-metrics">
-                <div class="metric">
-                  <span class="metric-label">Uptime</span>
-                  <span class="metric-value">${service.uptime_percentage.toFixed(2)}%</span>
-                </div>
-                <div class="metric">
-                  <span class="metric-label">Avg Response</span>
-                  <span class="metric-value">${service.response_time_avg}ms</span>
-                </div>
-              </div>
-              <div class="service-status">
-                <span class="badge badge-${getStatusBadgeClass(service.status)}">
-                  ${Utils.translateStatus(service.status)}
-                </span>
-              </div>
-            </div>
-          `).join('')}
+        container.innerHTML = `
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Service Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(service => `
+                <tr>
+                  <td>
+                    <div style="font-weight: 600;">${service.name}</div>
+                  </td>
+                  <td>
+                    <div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      ${service.description || '-'}
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge badge-${getStatusBadgeClass(service.status)}">
+                      ${Utils.translateStatus(service.status)}
+                    </span>
+                  </td>
+                  <td>${Utils.formatRelativeTime(service.updated_at)}</td>
+                  <td>
+                    <button
+                      class="btn btn-sm btn-secondary"
+                      onclick="viewService(${service.id})"
+                    >
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
         </div>
       `;
     }
 
-    function renderIncidents(incidents) {
-      const container = document.getElementById('incidentsContainer');
-      
-      if (incidents.length === 0) {
-        container.innerHTML = `
+    function renderIncidents() {
+        const container = document.getElementById('incidentsContainer');
+        const statusFilter = document.getElementById('incidentStatusFilter').value;
+        const severityFilter = document.getElementById('incidentSeverityFilter').value;
+
+        let filtered = incidents;
+        if (statusFilter) {
+            filtered = filtered.filter(i => i.status === statusFilter);
+        }
+        if (severityFilter) {
+            filtered = filtered.filter(i => i.severity === severityFilter);
+        }
+
+        // Sort by date (newest first)
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        // Limit to 10 most recent
+        filtered = filtered.slice(0, 10);
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
           <div class="empty-state">
             <div class="empty-state-icon">🎉</div>
             <div class="empty-state-text">No incidents</div>
-            <div class="empty-state-subtext">All systems are operational</div>
+            <div class="empty-state-subtext">All systems running smoothly</div>
           </div>
         `;
-        return;
-      }
+            return;
+        }
 
-      container.innerHTML = `
-        <div class="incidents-list">
-          ${incidents.map(incident => `
-            <div class="incident-item" onclick="window.location.href='incident-detail.html?id=${incident.id}'">
-              <div class="incident-header">
-                <div>
-                  <span class="badge badge-${getSeverityBadgeClass(incident.severity)}">
-                    ${Utils.translateStatus(incident.severity)}
-                  </span>
-                  <span class="badge badge-${getStatusBadgeClass(incident.status)}">
-                    ${Utils.translateStatus(incident.status)}
-                  </span>
-                </div>
-                <div class="incident-time">${Utils.formatRelativeTime(incident.started_at)}</div>
-              </div>
-              <div class="incident-title">${incident.title}</div>
-              <div class="incident-description">${incident.description}</div>
-            </div>
-          `).join('')}
+        container.innerHTML = `
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Incident</th>
+                <th>Service</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(incident => {
+            const service = services.find(s => s.id === incident.service_id);
+            return `
+                  <tr>
+                    <td>
+                      <div style="font-weight: 600;">${incident.title}</div>
+                      <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                        ${incident.description.substring(0, 80)}${incident.description.length > 80 ? '...' : ''}
+                      </div>
+                    </td>
+                    <td>${service ? service.name : 'Unknown'}</td>
+                    <td>
+                      <span class="badge badge-${getSeverityBadgeClass(incident.severity)}">
+                        ${Utils.translateStatus(incident.severity)}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge badge-${getStatusBadgeClass(incident.status)}">
+                        ${Utils.translateStatus(incident.status)}
+                      </span>
+                    </td>
+                    <td>${Utils.formatRelativeTime(incident.created_at)}</td>
+                    <td>
+                      <button
+                        class="btn btn-sm btn-secondary"
+                        onclick="viewIncident(${incident.id})"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                `;
+        }).join('')}
+            </tbody>
+          </table>
         </div>
       `;
     }
 
+    function viewService(id) {
+        window.location.href = `service-detail.html?id=${id}`;
+    }
+
+    function viewIncident(id) {
+        window.location.href = `incident-detail.html?id=${id}`;
+    }
+
     function getStatusBadgeClass(status) {
-      const classes = {
-        'operational': 'success',
-        'degraded': 'warning',
-        'down': 'danger',
-        'maintenance': 'info',
-        'investigating': 'warning',
-        'identified': 'warning',
-        'monitoring': 'info',
-        'resolved': 'success'
-      };
-      return classes[status] || 'info';
+        const classes = {
+            'up': 'success',
+            'degraded': 'warning',
+            'down': 'danger',
+            'open': 'warning',
+            'resolved': 'success'
+        };
+        return classes[status] || 'info';
     }
 
     function getSeverityBadgeClass(severity) {
-      const classes = {
-        'low': 'info',
-        'medium': 'warning',
-        'high': 'danger',
-        'critical': 'danger'
-      };
-      return classes[severity] || 'info';
+        const classes = {
+            'low': 'info',
+            'medium': 'warning',
+            'high': 'danger',
+            'critical': 'danger'
+        };
+        return classes[severity] || 'info';
     }
-  </script>
+</script>
 </body>
 </html>
