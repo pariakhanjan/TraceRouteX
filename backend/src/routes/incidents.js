@@ -1,12 +1,29 @@
 import express from 'express';
-import { getAllIncidents, getIncidentById, createIncident } from '../controllers/incidentController.js';
+import {
+    getAllIncidents,
+    getIncidentById,
+    createIncident,
+    addIncidentUpdate,
+    getIncidentUpdates,
+    resolveIncident
+} from '../controllers/incidentController.js';
 import { authenticate } from '../middleware/auth.js';
 import { authorize } from '../middleware/rbac.js';
 
 const router = express.Router();
 
-router.get('/', getAllIncidents);
-router.get('/:id', getIncidentById);
+// همه کاربران احراز‌شده می‌توانند لیست ببینند
+router.get('/', authenticate, getAllIncidents);
+router.get('/:id', authenticate, getIncidentById);
+
+// فقط engineer و admin می‌توانند رخداد ثبت کنند
 router.post('/', authenticate, authorize('engineer', 'admin'), createIncident);
+
+// فقط engineer و admin می‌توانند update اضافه کنند
+router.post('/:id/updates', authenticate, authorize('engineer', 'admin'), addIncidentUpdate);
+router.get('/:id/updates', authenticate, getIncidentUpdates);
+
+// فقط engineer و admin می‌توانند رخداد را حل کنند
+router.patch('/:id/resolve', authenticate, authorize('engineer', 'admin'), resolveIncident);
 
 export default router;
