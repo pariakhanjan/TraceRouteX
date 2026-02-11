@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | TracerouteX</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="navbar-brand">
+        <span class="navbar-logo">🛰️</span>
+        <span class="navbar-title">TracerouteX</span>
+      </div>
+      
+      <div class="navbar-menu">
+        <a href="dashboard.html" class="navbar-link active">
+          <span>📊</span> Dashboard
+        </a>
+        <a href="public-status.html" class="navbar-link">
+          <span>🌐</span> Status Page
+        </a>
+        <div class="navbar-divider"></div>
+        <div class="navbar-user">
+          <span class="user-info"></span>
+          <span class="user-role badge"></span>
+        </div>
+        <button id="logoutBtn" class="btn btn-secondary btn-sm">
+          Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Header -->
+      <div class="dashboard-header">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Overview of all services and recent incidents</p>
+        </div>
+        <div class="dashboard-actions" id="adminActions" style="display: none;">
+          <button class="btn btn-primary" onclick="window.location.href='admin-users.html'">
+            <span>👥</span> Manage Users
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-primary">📊</div>
+          <div class="stat-content">
+            <div class="stat-label">Total Services</div>
+            <div class="stat-value" id="totalServices">0</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-success">✅</div>
+          <div class="stat-content">
+            <div class="stat-label">Operational</div>
+            <div class="stat-value" id="operationalServices">0</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-warning">⚠️</div>
+          <div class="stat-content">
+            <div class="stat-label">Degraded</div>
+            <div class="stat-value" id="degradedServices">0</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-danger">🚨</div>
+          <div class="stat-content">
+            <div class="stat-label">Active Incidents</div>
+            <div class="stat-value" id="activeIncidents">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Services Section -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Services</h2>
+          <button class="btn btn-primary btn-sm" id="addServiceBtn" style="display: none;">
+            <span>➕</span> Add Service
+          </button>
+        </div>
+        
+        <div id="servicesContainer">
+          <!-- Services will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Recent Incidents -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Recent Incidents</h2>
+          <button class="btn btn-primary btn-sm" id="addIncidentBtn" style="display: none;">
+            <span>➕</span> Report Incident
+          </button>
+        </div>
+        
+        <div id="incidentsContainer">
+          <!-- Incidents will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../assets/js/utils.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    // Check authentication
+    if (!Auth.requireAuth()) {
+      // Redirects to login if not authenticated
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = Auth.getUser();
+      
+      // Display user info
+      Auth.displayUserInfo();
+      
+      // Show admin/operator controls
+      if (Auth.hasRole('admin', 'operator')) {
+        document.getElementById('adminActions').style.display = 'flex';
+        document.getElementById('addServiceBtn').style.display = 'inline-flex';
+        document.getElementById('addIncidentBtn').style.display = 'inline-flex';
+      }
+
+      // Load data
+      await loadDashboardData();
+
+      // Logout handler
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        try {
+          await API.logout();
+          Auth.logout();
+        } catch (error) {
+          Auth.logout();
+        }
+      });
+
+      // Add Service button
+      document.getElementById('addServiceBtn')?.addEventListener('click', () => {
+        window.location.href = 'service-detail.html?action=create';
+      });
+
+      // Add Incident button
+      document.getElementById('addIncidentBtn')?.addEventListener('click', () => {
+        window.location.href = 'incident-detail.html?action=create';
+      });
+    });
+
+    async function loadDashboardData() {
+      try {
+        // Show loading
+        Utils.showLoading(document.getElementById('servicesContainer'));
+        Utils.showLoading(document.getElementById('incidentsContainer'));
+
+        // Load services
+        const servicesData = await API.getServices();
+        const services = servicesData.services;
+
+        // Load incidents
+        const incidentsData = await API.getIncidents();
+        const incidents = incidentsData.incidents;
+
+        // Update statistics
+        updateStatistics(services, incidents);
+
+        // Render services
+        renderServices(services);
+
+        // Render incidents
+        renderIncidents(incidents);
+
+        // Hide loading
+        Utils.hideLoading();
+
+      } catch (error) {
+        Utils.hideLoading();
+        Utils.showAlert('Error loading dashboard data: ' + error.message, 'error');
+      }
+    }
+
+    function updateStatistics(services, incidents) {
+      const totalServices = services.length;
+      const operational = services.filter(s => s.status === 'operational').length;
+      const degraded = services.filter(s => s.status === 'degraded').length;
+      const activeIncidents = incidents.filter(i => i.status !== 'resolved').length;
+
+      document.getElementById('totalServices').textContent = totalServices;
+      document.getElementById('operationalServices').textContent = operational;
+      document.getElementById('degradedServices').textContent = degraded;
+      document.getElementById('activeIncidents').textContent = activeIncidents;
+    }
+
+    function renderServices(services) {
+      const container = document.getElementById('servicesContainer');
+      
+      if (services.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-text">No services yet</div>
+            <div class="empty-state-subtext">Add your first service to start monitoring</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="services-list">
+          ${services.map(service => `
+            <div class="service-item" onclick="window.location.href='service-detail.html?id=${service.id}'">
+              <div class="service-info">
+                <div class="service-name">${service.name}</div>
+                <div class="service-description">${service.description}</div>
+                <div class="service-url">${service.url}</div>
+              </div>
+              <div class="service-metrics">
+                <div class="metric">
+                  <span class="metric-label">Uptime</span>
+                  <span class="metric-value">${service.uptime_percentage.toFixed(2)}%</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Avg Response</span>
+                  <span class="metric-value">${service.response_time_avg}ms</span>
+                </div>
+              </div>
+              <div class="service-status">
+                <span class="badge badge-${getStatusBadgeClass(service.status)}">
+                  ${Utils.translateStatus(service.status)}
+                </span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderIncidents(incidents) {
+      const container = document.getElementById('incidentsContainer');
+      
+      if (incidents.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🎉</div>
+            <div class="empty-state-text">No incidents</div>
+            <div class="empty-state-subtext">All systems are operational</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="incidents-list">
+          ${incidents.map(incident => `
+            <div class="incident-item" onclick="window.location.href='incident-detail.html?id=${incident.id}'">
+              <div class="incident-header">
+                <div>
+                  <span class="badge badge-${getSeverityBadgeClass(incident.severity)}">
+                    ${Utils.translateStatus(incident.severity)}
+                  </span>
+                  <span class="badge badge-${getStatusBadgeClass(incident.status)}">
+                    ${Utils.translateStatus(incident.status)}
+                  </span>
+                </div>
+                <div class="incident-time">${Utils.formatRelativeTime(incident.started_at)}</div>
+              </div>
+              <div class="incident-title">${incident.title}</div>
+              <div class="incident-description">${incident.description}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function getStatusBadgeClass(status) {
+      const classes = {
+        'operational': 'success',
+        'degraded': 'warning',
+        'down': 'danger',
+        'maintenance': 'info',
+        'investigating': 'warning',
+        'identified': 'warning',
+        'monitoring': 'info',
+        'resolved': 'success'
+      };
+      return classes[status] || 'info';
+    }
+
+    function getSeverityBadgeClass(severity) {
+      const classes = {
+        'low': 'info',
+        'medium': 'warning',
+        'high': 'danger',
+        'critical': 'danger'
+      };
+      return classes[severity] || 'info';
+    }
+  </script>
+</body>
+</html>

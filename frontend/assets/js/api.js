@@ -263,6 +263,17 @@ const API = {
   },
 
   // ================== INCIDENTS APIs ==================
+  async getIncidents() {
+    if (this.useMockData) {
+      await this.delay();
+      return { incidents: this.mockData.incidents };
+    }
+    // Backend endpoint: GET /api/incidents
+    return this.request('/incidents');
+  },
+
+
+  // ================== INCIDENTS APIs ==================
   async getIncidents(serviceId = null) {
     if (this.useMockData) {
       await this.delay();
