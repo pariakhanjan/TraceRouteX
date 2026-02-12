@@ -88,6 +88,19 @@ app.get('/health', (req, res) => {
 // FRONTEND ROUTING
 // ════════════════════════════════════════════════════════════════
 
+// صفحه اصلی (index.html) - در ریشه frontend
+app.get('/', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+app.get('/index', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 // صفحات HTML در پوشه pages
 const frontendPages = [
     'dashboard',
@@ -111,11 +124,6 @@ frontendPages.forEach(page => {
         res.sendFile(path.join(frontendPath, 'pages', `${page}.html`));
     });
 });
-
-app.get('/', (req, res) => {
-    res.redirect('/index');
-});
-
 
 // ════════════════════════════════════════════════════════════════
 // 404 HANDLER

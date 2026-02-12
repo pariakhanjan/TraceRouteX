@@ -144,9 +144,9 @@ EXECUTE FUNCTION update_timestamp();
 
 -- کاربران نمونه (رمز عبور: password123)
 INSERT INTO users (username, email, password_hash, role)
-VALUES ('admin', 'admin@traceroutex.com', '$2a$10$examplehash1', 'admin'),
-       ('engineer1', 'engineer@traceroutex.com', '$2a$10$examplehash2', 'engineer'),
-       ('viewer1', 'viewer@traceroutex.com', '$2a$10$examplehash3', 'viewer');
+VALUES ('admin', 'admin@traceroutex.com', '$2a$12$sLfJCFQRzRDTAYtpzKEunudIsOhuyR9W6QLxFKE9.LT4CWaTRpWEG', 'admin'),
+       ('engineer1', 'engineer@traceroutex.com', '$2a$12$.kv0nWZ.sQLLtCzIf6eMqOc6cca.AV/0.yukTNYgnAXGkbQEt6C7K', 'engineer'),
+       ('viewer1', 'viewer@traceroutex.com', '$2a$12$/3dwoNhTdDswTUFSF/FF7.vF7LYAZowBjSjEGNNUA.mlu.5skxWyG', 'viewer');
 
 -- سرویس‌های نمونه
 INSERT INTO services (name, description, status, created_by)
