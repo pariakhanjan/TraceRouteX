@@ -109,7 +109,8 @@ const frontendPages = [
     'public-status',
     'register',
     'service-detail',
-    'admin-users'
+    'admin-users',
+    'error-handler'
 ];
 
 frontendPages.forEach(page => {
@@ -138,55 +139,8 @@ app.use((req, res, next) => {
             path: req.url
         });
     } else {
-        // اگر فایل استاتیک پیدا نشد
-        res.status(404).send(`
-            <!DOCTYPE html>
-            <html lang="fa" dir="rtl">
-            <head>
-                <meta charset="UTF-8">
-                <title>404 - صفحه پیدا نشد</title>
-                <style>
-                    * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body {
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        height: 100vh;
-                        color: white;
-                    }
-                    .container {
-                        text-align: center;
-                        background: rgba(255,255,255,0.1);
-                        padding: 3rem;
-                        border-radius: 20px;
-                        backdrop-filter: blur(10px);
-                    }
-                    h1 { font-size: 6rem; margin-bottom: 1rem; }
-                    p { font-size: 1.5rem; margin-bottom: 2rem; }
-                    a {
-                        display: inline-block;
-                        padding: 1rem 2rem;
-                        background: white;
-                        color: #667eea;
-                        text-decoration: none;
-                        border-radius: 50px;
-                        font-weight: bold;
-                        transition: transform 0.3s;
-                    }
-                    a:hover { transform: scale(1.05); }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>404</h1>
-                    <p>صفحه مورد نظر پیدا نشد</p>
-                    <a href="/index">بازگشت به صفحه اصلی</a>
-                </div>
-            </body>
-            </html>
-        `);
+        // اگر فایل استاتیک پیدا نشد - سرو کردن صفحه error-handler.html
+        res.status(404).sendFile(path.join(frontendPath, 'pages', 'error-handler.html'));
     }
 });
 

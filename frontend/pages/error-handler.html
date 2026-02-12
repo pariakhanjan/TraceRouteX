@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - صفحه پیدا نشد | TraceRouteX</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 600px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-icon {
+            font-size: 8rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        h1 {
+            font-size: 6rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .description {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        a {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        a:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        a.secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        a.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .path-info {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 4rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .container {
+                padding: 2rem 1.5rem;
+            }
+
+            .error-icon {
+                font-size: 5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-icon">🔍</div>
+        <h1>404</h1>
+        <p class="subtitle">صفحه مورد نظر پیدا نشد</p>
+        <p class="description">
+            متأسفانه صفحه‌ای که به دنبال آن هستید وجود ندارد یا منتقل شده است.
+        </p>
+
+        <div class="btn-container">
+            <a href="/index">🏠 بازگشت به صفحه اصلی</a>
+            <a href="/dashboard" class="secondary">📊 داشبورد</a>
+        </div>
+
+        <div class="path-info" id="pathInfo">
+            <!-- Path will be injected by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // نمایش مسیر درخواست شده
+        document.addEventListener('DOMContentLoaded', () => {
+            const pathInfo = document.getElementById('pathInfo');
+            const currentPath = window.location.pathname;
+            
+            if (currentPath && currentPath !== '/') {
+                pathInfo.innerHTML = `<strong>مسیر درخواستی:</strong> ${currentPath}`;
+            } else {
+                pathInfo.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
