@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت کاربران - TraceRouteX</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="dashboard.html">
+                    <span class="logo-icon">🌐</span>
+                    <span class="logo-text">TraceRouteX</span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-link">داشبورد</a>
+                <a href="admin-users.html" class="nav-link active">مدیریت کاربران</a>
+                <button id="logoutBtn" class="btn btn-danger btn-sm">خروج</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="dashboard-header">
+            <div>
+                <h1>مدیریت کاربران</h1>
+                <p class="text-muted">مدیریت کاربران و نقش‌های سیستم</p>
+            </div>
+            <button id="createUserBtn" class="btn btn-primary">
+                <span>➕</span>
+                کاربر جدید
+            </button>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3>لیست کاربران</h3>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="جستجو در کاربران...">
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="loadingUsers" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>در حال بارگذاری کاربران...</p>
+                </div>
+                <div id="usersTableContainer" style="display: none;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>شناسه</th>
+                                <th>نام کاربری</th>
+                                <th>ایمیل</th>
+                                <th>نقش</th>
+                                <th>تاریخ ثبت‌نام</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <span class="empty-icon">👥</span>
+                    <h3>کاربری یافت نشد</h3>
+                    <p>هنوز کاربری در سیستم ثبت نشده است.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create/Edit User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">کاربر جدید</h2>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                
+                <div class="form-group">
+                    <label for="username">نام کاربری *</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        class="form-control" 
+                        required 
+                        minlength="3"
+                        maxlength="50"
+                        placeholder="username">
+                    <small class="form-text">حداقل 3 کاراکتر، فقط حروف انگلیسی، اعداد و _ </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">ایمیل *</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-control" 
+                        required
+                        placeholder="user@example.com">
+                </div>
+
+                <div class="form-group" id="passwordGroup">
+                    <label for="password">رمز عبور *</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-control" 
+                        minlength="6"
+                        placeholder="حداقل 6 کاراکتر">
+                    <small class="form-text">در حالت ویرایش، خالی بگذارید تا رمز تغییر نکند</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="role">نقش کاربر *</label>
+                    <select id="role" class="form-control" required>
+                        <option value="">انتخاب کنید...</option>
+                        <option value="viewer">Viewer - مشاهده‌گر</option>
+                        <option value="engineer">Engineer - مهندس</option>
+                        <option value="admin">Admin - مدیر</option>
+                    </select>
+                    <small class="form-text">
+                        <strong>Viewer:</strong> فقط مشاهده | 
+                        <strong>Engineer:</strong> ایجاد/ویرایش رخدادها | 
+                        <strong>Admin:</strong> دسترسی کامل
+                    </small>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">انصراف</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span id="submitBtnText">ذخیره</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2>تایید حذف</h2>
+                <button class="modal-close" id="closeDeleteModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>آیا از حذف کاربر <strong id="deleteUsername"></strong> اطمینان دارید؟</p>
+                <p class="text-danger">این عملیات قابل بازگشت نیست!</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">انصراف</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <span id="deleteBtnText">حذف کاربر</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/utils.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script>
+        // State
+        let allUsers = [];
+        let editingUserId = null;
+        let deletingUserId = null;
+        let currentUser = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check admin authentication
+            currentUser = await checkAuth(['admin']);
+            
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            await loadUsers();
+            initializeEventListeners();
+        });
+
+        // Load all users
+        async function loadUsers() {
+            try {
+                showLoading(true);
+                allUsers = await API.getUsers();
+                renderUsers(allUsers);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showToast('خطا در بارگذاری کاربران: ' + error.message, 'error');
+                showEmptyState();
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Render users table
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            
+            if (!users || users.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>
+                        <strong>${escapeHtml(user.username)}</strong>
+                        ${user.id === currentUser.id ? '<span class="badge badge-info">شما</span>' : ''}
+                    </td>
+                    <td>${escapeHtml(user.email)}</td>
+                    <td>
+                        <span class="badge badge-${getRoleBadgeClass(user.role)}">
+                            ${getRoleLabel(user.role)}
+                        </span>
+                    </td>
+                    <td>${formatDate(user.created_at)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button 
+                                class="btn btn-sm btn-primary" 
+                                onclick="openEditModal(${user.id})"
+                                ${user.id === currentUser.id ? 'title="ویرایش پروفایل خود"' : ''}>
+                                ✏️ ویرایش
+                            </button>
+                            ${user.id !== currentUser.id ? `
+                                <button 
+                                    class="btn btn-sm btn-danger" 
+                                    onclick="openDeleteModal(${user.id})">
+                                    🗑️ حذف
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('usersTableContainer').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+
+        // Show/hide loading
+        function showLoading(show) {
+            document.getElementById('loadingUsers').style.display = show ? 'flex' : 'none';
+            document.getElementById('usersTableContainer').style.display = show ? 'none' : 'block';
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            document.getElementById('usersTableContainer').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            // Create user button
+            document.getElementById('createUserBtn').addEventListener('click', openCreateModal);
+
+            // Modal controls
+            document.getElementById('closeModalBtn').addEventListener('click', closeUserModal);
+            document.getElementById('cancelBtn').addEventListener('click', closeUserModal);
+            document.getElementById('userForm').addEventListener('submit', handleUserSubmit);
+
+            // Delete modal controls
+            document.getElementById('closeDeleteModalBtn').addEventListener('click', closeDeleteModal);
+            document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
+            document.getElementById('confirmDeleteBtn').addEventListener('click', handleUserDelete);
+
+            // Search
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                logout();
+                window.location.href = 'login.html';
+            });
+
+            // Close modals on outside click
+            window.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    closeUserModal();
+                    closeDeleteModal();
+                }
+            });
+        }
+
+        // Open create modal
+        function openCreateModal() {
+            editingUserId = null;
+            document.getElementById('modalTitle').textContent = 'کاربر جدید';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('password').required = true;
+            document.getElementById('passwordGroup').querySelector('small').style.display = 'none';
+            document.getElementById('submitBtnText').textContent = 'ایجاد کاربر';
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        // Open edit modal
+        async function openEditModal(userId) {
+            try {
+                editingUserId = userId;
+                const user = allUsers.find(u => u.id === userId);
+                
+                if (!user) {
+                    showToast('کاربر یافت نشد', 'error');
+                    return;
+                }
+
+                document.getElementById('modalTitle').textContent = 'ویرایش کاربر';
+                document.getElementById('userId').value = user.id;
+                document.getElementById('username').value = user.username;
+                document.getElementById('email').value = user.email;
+                document.getElementById('role').value = user.role;
+                document.getElementById('password').value = '';
+                document.getElementById('password').required = false;
+                document.getElementById('passwordGroup').querySelector('small').style.display = 'block';
+                document.getElementById('submitBtnText').textContent = 'ذخیره تغییرات';
+                document.getElementById('userModal').classList.add('active');
+            } catch (error) {
+                showToast('خطا در بارگذاری اطلاعات کاربر', 'error');
+            }
+        }
+
+        // Close user modal
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('active');
+            document.getElementById('userForm').reset();
+            editingUserId = null;
+        }
+
+        // Handle user form submit
+        async function handleUserSubmit(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const originalText = submitBtnText.textContent;
+
+            try {
+                submitBtn.disabled = true;
+                submitBtnText.textContent = 'در حال ذخیره...';
+
+                const formData = {
+                    username: document.getElementById('username').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    role: document.getElementById('role').value
+                };
+
+                // Validate username (only letters, numbers, underscore)
+                if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+                    showToast('نام کاربری فقط می‌تواند شامل حروف انگلیسی، اعداد و _ باشد', 'error');
+                    return;
+                }
+
+                // Add password only if provided
+                const password = document.getElementById('password').value;
+                if (password) {
+                    if (password.length < 6) {
+                        showToast('رمز عبور باید حداقل 6 کاراکتر باشد', 'error');
+                        return;
+                    }
+                    formData.password = password;
+                } else if (!editingUserId) {
+                    showToast('رمز عبور الزامی است', 'error');
+                    return;
+                }
+
+                if (editingUserId) {
+                    // Update existing user
+                    await API.updateUser(editingUserId, formData);
+                    showToast('کاربر با موفقیت ویرایش شد', 'success');
+                } else {
+                    // Create new user
+                    await API.createUser(formData);
+                    showToast('کاربر با موفقیت ایجاد شد', 'success');
+                }
+
+                closeUserModal();
+                await loadUsers();
+
+            } catch (error) {
+                console.error('Error saving user:', error);
+                showToast('خطا: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtnText.textContent = originalText;
+            }
+        }
+
+        // Open delete modal
+        function openDeleteModal(userId) {
+            deletingUserId = userId;
+            const user = allUsers.find(u => u.id === userId);
+            
+            if (!user) {
+                showToast('کاربر یافت نشد', 'error');
+                return;
+            }
+
+            document.getElementById('deleteUsername').textContent = user.username;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        // Close delete modal
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deletingUserId = null;
+        }
+
+        // Handle user delete
+        async function handleUserDelete() {
+            const deleteBtn = document.getElementById('confirmDeleteBtn');
+            const deleteBtnText = document.getElementById('deleteBtnText');
+            const originalText = deleteBtnText.textContent;
+
+            try {
+                deleteBtn.disabled = true;
+                deleteBtnText.textContent = 'در حال حذف...';
+
+                await API.deleteUser(deletingUserId);
+                showToast('کاربر با موفقیت حذف شد', 'success');
+                
+                closeDeleteModal();
+                await loadUsers();
+
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showToast('خطا در حذف کاربر: ' + error.message, 'error');
+            } finally {
+                deleteBtn.disabled = false;
+                deleteBtnText.textContent = originalText;
+            }
+        }
+
+        // Handle search
+        function handleSearch(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                renderUsers(allUsers);
+                return;
+            }
+
+            const filtered = allUsers.filter(user => 
+                user.username.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                getRoleLabel(user.role).includes(searchTerm)
+            );
+
+            renderUsers(filtered);
+        }
+
+        // Helper: Get role badge class
+        function getRoleBadgeClass(role) {
+            const classes = {
+                'admin': 'danger',
+                'engineer': 'warning',
+                'viewer': 'info'
+            };
+            return classes[role] || 'secondary';
+        }
+
+        // Helper: Get role label
+        function getRoleLabel(role) {
+            const labels = {
+                'admin': 'مدیر',
+                'engineer': 'مهندس',
+                'viewer': 'مشاهده‌گر'
+            };
+            return labels[role] || role;
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
