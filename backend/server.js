@@ -85,33 +85,37 @@ app.get('/health', (req, res) => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// FRONTEND ROUTING (SPA Support)
+// FRONTEND ROUTING
 // ════════════════════════════════════════════════════════════════
 
-// برای صفحات HTML که مستقیماً درخواست می‌شوند
-const frontendRoutes = [
-    '/index.html',
-    '/login.html',
-    '/register.html',
-    '/dashboard.html',
-    '/services.html',
-    '/service-detail.html',
-    '/incidents.html',
-    '/incident-detail.html',
-    '/users.html',
-    '/public-status.html'
+// صفحات HTML در پوشه pages
+const frontendPages = [
+    'dashboard',
+    'incident-detail',
+    'login',
+    'public-status',
+    'register',
+    'service-detail',
+    'admin-users'
 ];
 
-frontendRoutes.forEach(route => {
-    app.get(route, (req, res) => {
-        res.sendFile(path.join(frontendPath, route));
+frontendPages.forEach(page => {
+    app.get(`/${page}`, (req, res) => {
+        res.sendFile(path.join(frontendPath, 'pages', `${page}.html`));
+    });
+    app.get(`/${page}.html`, (req, res) => {
+        res.sendFile(path.join(frontendPath, 'pages', `${page}.html`));
+    });
+    // پشتیبانی از مسیر /pages/xxx.html
+    app.get(`/pages/${page}.html`, (req, res) => {
+        res.sendFile(path.join(frontendPath, 'pages', `${page}.html`));
     });
 });
 
-// Root route - redirect to index
 app.get('/', (req, res) => {
-    res.redirect('/index.html');
+    res.redirect('/index');
 });
+
 
 // ════════════════════════════════════════════════════════════════
 // 404 HANDLER
@@ -170,7 +174,7 @@ app.use((req, res, next) => {
                 <div class="container">
                     <h1>404</h1>
                     <p>صفحه مورد نظر پیدا نشد</p>
-                    <a href="/index.html">بازگشت به صفحه اصلی</a>
+                    <a href="/index">بازگشت به صفحه اصلی</a>
                 </div>
             </body>
             </html>
@@ -218,7 +222,7 @@ app.listen(PORT, async () => {
 
     // باز کردن خودکار مرورگر بعد از 1.5 ثانیه
     setTimeout(async () => {
-        const url = `http://localhost:${PORT}/index.html`;
+        const url = `http://localhost:${PORT}/index`;
         try {
             console.log('\n🌐 Opening browser automatically...');
             await open(url);
