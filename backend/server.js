@@ -2,170 +2,188 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import open from 'open';
 import { testConnection } from './src/config/db.js';
 
 // Import routes
 import authRoutes from './src/routes/auth.js';
 import serviceRoutes from './src/routes/services.js';
 import incidentRoutes from './src/routes/incidents.js';
-import publicRoutes from './src/routes/public.js'; // اضافه شد
+import publicRoutes from './src/routes/public.js';
 
 dotenv.config();
+
+// ES Module way to get __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ============================================
-// DATABASE CONNECTION
-// ============================================
-await testConnection();
+// ════════════════════════════════════════════════════════════════
+// MIDDLEWARE CONFIGURATION
+// ════════════════════════════════════════════════════════════════
 
-
-// ============================================
-// MIDDLEWARE - FLEXIBLE CORS CONFIGURATION
-// ============================================
-
-// پشتیبانی کامل از:
-// - WebStorm Built-in Server (localhost:63342)
-// - Live Server (localhost:5500)
-// - Direct file opening (origin: null)
+// CORS Configuration
 app.use(cors({
-    origin: function(origin, callback) {
-        const allowedOrigins = [
-            // WebStorm Built-in Server
-            'http://localhost:63342',
-            'http://127.0.0.1:63342',
-
-            // Live Server (VSCode)
-            'http://localhost:5500',
-            'http://127.0.0.1:5500',
-
-            // Other common ports
-            'http://localhost:8080',
-            'http://127.0.0.1:8080',
-            'http://localhost:3001',
-            'http://127.0.0.1:3001',
-
-            // Direct file opening
-            null
-        ];
-
-        // اگه origin در لیست مجاز بود یا undefined بود (Postman/curl)
-        if (!origin || allowedOrigins.indexOf(origin) !== -1 ||
-            (origin && origin.startsWith('http://localhost:63342'))) {
-            callback(null, true);
-        } else {
-            console.warn(`⚠️  Blocked origin: ${origin}`);
-            callback(null, true); // در حالت development همه رو مجاز کن
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    exposedHeaders: ['Set-Cookie']
+    origin: process.env.FRONTEND_URL || `http://localhost:${PORT}`,
+    credentials: true
 }));
 
+// Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Request logging middleware
+// Request logger (برای دیباگ)
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
-    const origin = req.headers.origin || 'direct';
-    const userAgent = req.headers['user-agent'] ?
-        req.headers['user-agent'].substring(0, 50) : 'unknown';
-
-    console.log(`[${timestamp}] ${req.method} ${req.path}`);
-    console.log(`  Origin: ${origin}`);
-
+    console.log(`[${timestamp}] ${req.method} ${req.url}`);
     next();
 });
 
-// ============================================
-// ROUTES
-// ============================================
+// ════════════════════════════════════════════════════════════════
+// SERVE FRONTEND STATIC FILES
+// ════════════════════════════════════════════════════════════════
 
-// Health check endpoint
+const frontendPath = path.join(__dirname, '..', 'frontend');
+app.use(express.static(frontendPath, {
+    index: false, // غیرفعال کردن سرو خودکار index.html
+    extensions: ['html'] // اجازه دسترسی بدون پسوند
+}));
+
+console.log(`📁 Frontend path: ${frontendPath}`);
+
+// ════════════════════════════════════════════════════════════════
+// DATABASE CONNECTION TEST
+// ════════════════════════════════════════════════════════════════
+
+await testConnection();
+
+// ════════════════════════════════════════════════════════════════
+// API ROUTES
+// ════════════════════════════════════════════════════════════════
+
+app.use('/api/auth', authRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/incidents', incidentRoutes);
+app.use('/public', publicRoutes);
+
+// ════════════════════════════════════════════════════════════════
+// HEALTH CHECK
+// ════════════════════════════════════════════════════════════════
+
 app.get('/health', (req, res) => {
     res.json({
         success: true,
-        message: 'TraceRouteX API is running',
+        message: 'TraceRouteX Server is running!',
         timestamp: new Date().toISOString(),
-        cors: 'enabled',
         environment: process.env.NODE_ENV || 'development'
     });
 });
 
-// Mount routes
-app.use('/api/auth', authRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/incidents', incidentRoutes);
-// app.use('/api/users', userRoutes);
+// ════════════════════════════════════════════════════════════════
+// FRONTEND ROUTING (SPA Support)
+// ════════════════════════════════════════════════════════════════
 
-// Public status page endpoint
-app.get('/public/status', async (req, res) => {
-    try {
-        const servicesQuery = `
-      SELECT id, name, status, description 
-      FROM services 
-      ORDER BY name
-    `;
+// برای صفحات HTML که مستقیماً درخواست می‌شوند
+const frontendRoutes = [
+    '/index.html',
+    '/login.html',
+    '/register.html',
+    '/dashboard.html',
+    '/services.html',
+    '/service-detail.html',
+    '/incidents.html',
+    '/incident-detail.html',
+    '/users.html',
+    '/public-status.html'
+];
 
-        const incidentsQuery = `
-      SELECT i.id, i.title, i.severity, i.status, i.created_at,
-             s.name as service_name
-      FROM incidents i
-      JOIN services s ON i.service_id = s.id
-      WHERE i.is_published = true
-      ORDER BY i.created_at DESC
-      LIMIT 10
-    `;
-
-        const [servicesResult, incidentsResult] = await Promise.all([
-            pool.query(servicesQuery),
-            pool.query(incidentsQuery)
-        ]);
-
-        res.json({
-            success: true,
-            data: {
-                services: servicesResult.rows,
-                incidents: incidentsResult.rows
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching public status:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch public status'
-        });
-    }
-});
-
-// ============================================
-// ERROR HANDLING
-// ============================================
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: `Cannot ${req.method} ${req.path}`,
-        availableRoutes: [
-            '/health',
-            '/api/auth/*',
-            '/api/services/*',
-            '/api/incidents/*',
-            '/api/users/*',
-            '/public/status'
-        ]
+frontendRoutes.forEach(route => {
+    app.get(route, (req, res) => {
+        res.sendFile(path.join(frontendPath, route));
     });
 });
 
-// Global error handler
+// Root route - redirect to index
+app.get('/', (req, res) => {
+    res.redirect('/index.html');
+});
+
+// ════════════════════════════════════════════════════════════════
+// 404 HANDLER
+// ════════════════════════════════════════════════════════════════
+
+app.use((req, res, next) => {
+    // اگر درخواست برای API بود
+    if (req.url.startsWith('/api') || req.url.startsWith('/public')) {
+        res.status(404).json({
+            success: false,
+            message: 'API endpoint not found',
+            path: req.url
+        });
+    } else {
+        // اگر فایل استاتیک پیدا نشد
+        res.status(404).send(`
+            <!DOCTYPE html>
+            <html lang="fa" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>404 - صفحه پیدا نشد</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        color: white;
+                    }
+                    .container {
+                        text-align: center;
+                        background: rgba(255,255,255,0.1);
+                        padding: 3rem;
+                        border-radius: 20px;
+                        backdrop-filter: blur(10px);
+                    }
+                    h1 { font-size: 6rem; margin-bottom: 1rem; }
+                    p { font-size: 1.5rem; margin-bottom: 2rem; }
+                    a {
+                        display: inline-block;
+                        padding: 1rem 2rem;
+                        background: white;
+                        color: #667eea;
+                        text-decoration: none;
+                        border-radius: 50px;
+                        font-weight: bold;
+                        transition: transform 0.3s;
+                    }
+                    a:hover { transform: scale(1.05); }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>404</h1>
+                    <p>صفحه مورد نظر پیدا نشد</p>
+                    <a href="/index.html">بازگشت به صفحه اصلی</a>
+                </div>
+            </body>
+            </html>
+        `);
+    }
+});
+
+// ════════════════════════════════════════════════════════════════
+// ERROR HANDLER
+// ════════════════════════════════════════════════════════════════
+
 app.use((err, req, res, next) => {
-    console.error('❌ Server Error:', err);
+    console.error('❌ Error:', err);
 
     res.status(err.status || 500).json({
         success: false,
@@ -174,37 +192,54 @@ app.use((err, req, res, next) => {
     });
 });
 
-// ============================================
+// ════════════════════════════════════════════════════════════════
 // START SERVER
-// ============================================
+// ════════════════════════════════════════════════════════════════
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`
-╔════════════════════════════════════════╗
-║     TraceRouteX API Server Started     ║
-║                                        ║
-║  Port: ${PORT}                           ║
-║  Environment: ${process.env.NODE_ENV || 'development'}              ║
-║  CORS: Multi-Environment Support       ║
-║                                        ║
-║  Supported Clients:                    ║
-║  ✅ WebStorm (localhost:63342)         ║
-║  ✅ Live Server (localhost:5500)       ║
-║  ✅ Direct File Opening (file:///)     ║
-║                                        ║
-║  Health Check:                         ║
-║  http://localhost:${PORT}/health         ║
-╚════════════════════════════════════════╝
-  `);
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║          🚀TraceRouteX Server Started Successfully!            ║
+║                                                                ║
+║  ┌──────────────────────────────────────────────────────────┐  ║
+║  │  📡 Server URL:    http://localhost:${PORT}                 │  ║
+║  │  🌐 Frontend:      http://localhost:${PORT}/index.html      │  ║
+║  │  🔌 API Base:      http://localhost:${PORT}/api             │  ║
+║  │  📊 Public Status: http://localhost:${PORT}/public/status   │  ║
+║  │  ❤️  Health Check:  http://localhost:${PORT}/health         │  ║
+║  └──────────────────────────────────────────────────────────┘  ║
+║                                                                ║
+║  Environment: ${process.env.NODE_ENV || 'development'}                                      ║
+║  Database: PostgreSQL (Connected ✅)                            ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+    `);
+
+    // باز کردن خودکار مرورگر بعد از 1.5 ثانیه
+    setTimeout(async () => {
+        const url = `http://localhost:${PORT}/index.html`;
+        try {
+            console.log('\n🌐 Opening browser automatically...');
+            await open(url);
+            console.log('✅ Browser opened successfully!\n');
+        } catch (error) {
+            console.log('⚠️  Could not open browser automatically.');
+            console.log(`   Please open manually: ${url}\n`);
+        }
+    }, 1500);
 });
 
-// Graceful shutdown
+// ════════════════════════════════════════════════════════════════
+// GRACEFUL SHUTDOWN
+// ════════════════════════════════════════════════════════════════
+
+process.on('SIGINT', () => {
+    console.log('\n\n🛑 Server is shutting down gracefully...');
+    process.exit(0);
+});
+
 process.on('SIGTERM', () => {
-    // console.loSIGTERM signal received: closing HTTP server');
-    pool.end(() => {
-        console.log('Database pool closed');
-        process.exit(0);
-    });
+    console.log('\n\n🛑 Server is shutting down gracefully...');
+    process.exit(0);
 });
-
-// module.exports = { app, pool };
