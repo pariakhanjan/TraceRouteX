@@ -117,6 +117,21 @@ const Utils = {
         return date.toLocaleString('en-US', options);
     },
 
+    formatDate(dateString) {
+        if (!dateString) return '-';
+    
+        const date = new Date(dateString);
+        const options = {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+    
+        return date.toLocaleString('en-US', options);
+    },
+
     // ==========================================
     // Validation
     // ==========================================
@@ -349,7 +364,79 @@ const Utils = {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
 
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    },
+
+        // ==========================================
+    // Translation Helpers
+    // ==========================================
+
+    translateSeverity(severity) {
+        const map = {
+            low: 'Low',
+            medium: 'Medium',
+            high: 'High',
+            critical: 'Critical'
+        };
+        return map[severity] || severity || '-';
+    },
+
+    translateStatus(status) {
+        const map = {
+            investigating: 'Investigating',
+            identified: 'Identified',
+            monitoring: 'Monitoring',
+            resolved: 'Resolved',
+            open: 'Open',
+            closed: 'Closed'
+        };
+        return map[status] || status || '-';
+    },
+
+    translateServiceStatus(status) {
+        const map = {
+            up: 'Up',
+            degraded: 'Degraded',
+            down: 'Down'
+        };
+        return map[status] || status || '-';
+    },
+
+    translateIncidentStatus(status) {
+        const map = {
+            open: 'Open',
+            investigating: 'Investigating',
+            identified: 'Identified',
+            monitoring: 'Monitoring',
+            resolved: 'Resolved',
+            closed: 'Closed'
+        };
+        return map[status] || status || '-';
+    },
+
+        // ==========================================
+    // Auth Check
+    // ==========================================
+
+    checkAuth() {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'login.html';
+            return false;
+        }
+        return true;
+    },
+
+    getToken() {
+        return localStorage.getItem('token') || sessionStorage.getItem('token') || null;
+    },
+
+    logout() {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+        window.location.href = 'login.html';
     }
+
+
 };
 
 // Add CSS for alerts dynamically

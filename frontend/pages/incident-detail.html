@@ -377,13 +377,15 @@
         document.addEventListener('DOMContentLoaded', async () => {
             Auth.requireAuth();
             Auth.displayUserInfo();
+            await Utils.checkAuth();
 
             // Get incident ID from URL
             const urlParams = new URLSearchParams(window.location.search);
-            incidentId = urlParams.get('id');
+            currentIncidentId = urlParams.get('id');
 
-            if (!incidentId) {
-                showError('No incident ID provided');
+            if (!currentIncidentId) {
+                Utils.showError('No incident ID provided');
+                setTimeout(() => window.location.href = 'dashboard.html', 2000);
                 return;
             }
 
@@ -492,13 +494,52 @@
         // Load timeline
         async function loadTimeline() {
             try {
-                const updates = await API.getIncidentUpdates(incidentId);
-                renderTimeline(updates);
+                if (!currentIncidentId) {
+                    throw new Error('No incident ID available');
+                }
+
+                const response = await API.getIncidentUpdates(currentIncidentId);
+        
+                if (!response || !response.success) {
+                    throw new Error('Invalid response from server');
+                }
+
+                const updates = response.data || [];
+                const container = document.getElementById('timelineContainer');
+        
+                if (!container) {
+                    console.error('Timeline container not found');
+                    return;
+                }
+
+                if (updates.length === 0) {
+                    container.innerHTML = '<p class="no-data">No updates yet</p>';
+                    return;
+                }
+
+                container.innerHTML = updates.map(update => `
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <span class="badge badge-${update.status}">${Utils.translateIncidentStatus(update.status)}</span>
+                            <span class="timeline-date">${Utils.formatDate(update.created_at)}</span>
+                        </div>
+                        <div class="timeline-message">${update.message || 'No message'}</div>
+                        <div class="timeline-footer">
+                            <span>by ${update.created_by_username || 'Unknown'}</span>
+                        </div>
+                    </div>
+                `).join('');
+        
             } catch (error) {
-                console.error('Error loading timeline:', error);
-                Utils.showAlert('Failed to load timeline', 'error');
+                console.error('Timeline error:', error);
+                const container = document.getElementById('timelineContainer');
+                if (container) {
+                    container.innerHTML = '<p class="error-message">Failed to load timeline</p>';
+                }
             }
         }
+
+
 
         // Render timeline
         function renderTimeline(updates) {

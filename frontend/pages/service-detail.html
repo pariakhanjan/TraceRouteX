@@ -479,42 +479,81 @@
         });
     });
 
-    async function loadServiceDetails(serviceId) {
+    function displayServiceDetails(service) {
+        const titleEl = document.getElementById('serviceTitle');
+        if (titleEl) {
+            titleEl.textContent = service.name || 'Unknown Service';
+        }
+
+        const createdEl = document.getElementById('serviceCreatedAt');
+        if (createdEl) {
+            createdEl.textContent = service.created_at ? Utils.formatPersianDate(service.created_at) : '-';
+        }
+
+        const updatedEl = document.getElementById('serviceUpdatedAt');
+        if (updatedEl) {
+            updatedEl.textContent = service.updated_at ? Utils.formatPersianDate(service.updated_at) : '-';
+        }
+
+        const descEl = document.getElementById('serviceDescription');
+        if (descEl) {
+            descEl.textContent = service.description || 'No description';
+        }
+
+        const statusEl = document.getElementById('currentStatus');
+        if (statusEl) {
+            const statusConfig = getStatusConfig(service.status);
+            statusEl.innerHTML = `<span class="status-badge status-${service.status}">${statusConfig.icon} ${statusConfig.text}</span>`;
+        }
+
+        updateStats(service);
+    }
+
+    async function loadServiceDetails() {
         try {
-            Utils.showLoading(document.getElementById('serviceDisplay'));
+            const response = await API.getServiceById(currentServiceId);
+        
+            if (!response || !response.success) {
+                throw new Error(response?.message || 'Failed to load service');
+            }
 
-            const response = await API.getServiceById(serviceId);
-            currentService = response.data.service;
+            const serviceData = response.data;  // ⚠️ حذف کردم: .service || response.data
+        
+            if (!serviceData) {
+                throw new Error('Service data not found');
+            }
 
-            // Update page title
-            document.title = `${currentService.name} | TracerouteX`;
-
-            // Display service info
-            document.getElementById('serviceName').textContent = currentService.name;
-            document.getElementById('serviceDescription').textContent = currentService.description || 'No description provided';
-
-            const statusBadge = `<span class="badge badge-${getStatusBadgeClass(currentService.status)}">${Utils.translateStatus(currentService.status)}</span>`;
-            document.getElementById('serviceStatusBadge').innerHTML = statusBadge;
-
-            // Display meta info
-            document.getElementById('serviceCreatedAt').textContent = Utils.formatDateTime(currentService.created_at);
-            document.getElementById('serviceUpdatedAt').textContent = Utils.formatRelativeTime(currentService.updated_at);
-
-            // Update current status display
-            const statusDisplay = document.getElementById('currentStatusDisplay');
-            statusDisplay.textContent = Utils.translateStatus(currentService.status);
-            statusDisplay.className = `status-indicator status-${currentService.status}`;
-
-            // Load related incidents
-            await loadServiceIncidents(serviceId);
-
-            Utils.hideLoading();
+            currentService = serviceData;
+            displayServiceDetails(serviceData);
+            loadServiceIncidents();
 
         } catch (error) {
-            Utils.hideLoading();
-            Utils.showAlert('Error loading service details: ' + error.message, 'error');
-            setTimeout(() => window.location.href = 'dashboard.html', 2000);
+            console.error('Error:', error);
+            Utils.showAlert('Error: ' + error.message, 'error');
+            setTimeout(() => window.location.href = '/pages/dashboard.html', 3000);
         }
+    }
+
+    function updateStats(service) {
+        const activeEl = document.getElementById('activeIncidents');
+        const totalEl = document.getElementById('totalIncidents');
+    
+        if (activeEl) activeEl.textContent = '0';
+        if (totalEl) totalEl.textContent = '0';
+    }
+
+    function updateIncidentStats(incidents) {
+        if (!incidents) return;
+
+        const activeIncidents = incidents.filter(i => 
+            i.status === 'investigating' || i.status === 'identified' || i.status === 'monitoring'
+        ).length;
+
+        const activeEl = document.getElementById('activeIncidents');
+        const totalEl = document.getElementById('totalIncidents');
+    
+        if (activeEl) activeEl.textContent = activeIncidents;
+        if (totalEl) totalEl.textContent = incidents.length;
     }
 
     async function loadServiceIncidents(serviceId) {

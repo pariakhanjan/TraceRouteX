@@ -30,10 +30,14 @@ const API = {
         }
 
             // ✅ normalize response: هر دو ساختار را پشتیبانی می‌کند
-        if (result.token && result.user && !result.data) {
-            result.data = {
-                token: result.token,
-                user: result.user
+        if (result.success && result.token && result.user && !result.data) {
+            return {
+                success: result.success,
+                data: {
+                    token: result.token,
+                    user: result.user
+                },
+                message: result.message
             };
         }
 
@@ -59,10 +63,14 @@ const API = {
         }
 
             // ✅ normalize response: هر دو ساختار را پشتیبانی می‌کند
-        if (result.token && result.user && !result.data) {
-            result.data = {
-                token: result.token,
-                user: result.user
+        if (result.success && result.token && result.user && !result.data) {
+            return {
+                success: result.success,
+                data: {
+                    token: result.token,
+                    user: result.user
+                },
+                message: result.message
             };
         }
 
@@ -76,10 +84,18 @@ const API = {
 
         const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
             method: 'POST',
+                        headers: {
+                'Content-Type': 'application/json'
+            },
             credentials: 'include'
         });
 
         const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Logout failed');
+        }
+
         return result;
     },
 
@@ -89,8 +105,14 @@ const API = {
         }
 
         const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-            credentials: 'include'
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
+        // const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        //     credentials: 'include'
+        // });
 
         const result = await response.json();
 
@@ -99,41 +121,6 @@ const API = {
         }
 
         return result; // { success: true, data: { user }, message: "..." }
-    },
- // ==========================================
-    // Helper for authenticated requests
-    // ==========================================
-
-    async _authenticatedFetch(url, options = {}) {
-        const token = localStorage.getItem('token');
-
-        const config = {
-            ...options,
-            credentials: 'include',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-        };
-
-        const response = await fetch(url, config);
-        const result = await response.json();
-
-        // Auto logout on authentication failure
-        if (!response.ok && (response.status === 401 || response.status === 403)) {
-            if (typeof Auth !== 'undefined') {
-                Auth.logout();
-            }
-            window.location.href = '/pages/login.html';
-            throw new Error('Authentication failed');
-        }
-
-        if (!response.ok) {
-            throw new Error(result.message || 'Request failed');
-        }
-
-        return result;
     },
 
     // ==========================================
@@ -145,7 +132,15 @@ const API = {
             return this._mockGetServices();
         }
 
-        const result = await this._authenticatedFetch(`${API_BASE_URL}/api/services`);
+        const response = await fetch(`${API_BASE_URL}/api/services?`, {
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to fetch services');
+        }
 
         // ✅ Normalize: if data is array, wrap it
         if (Array.isArray(result.data)) {
@@ -155,15 +150,6 @@ const API = {
                 message: result.message || 'Services retrieved successfully'
             };
         }
-        // const response = await fetch(`${API_BASE_URL}/api/services`, {
-        //     credentials: 'include'
-        // });
-
-        // const result = await response.json();
-
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to fetch services');
-        // }
 
         return result; // { success: true, data: { services: [...] }, message: "..." }
     },
@@ -173,7 +159,15 @@ const API = {
             return this._mockGetServiceById(id);
         }
 
-        const result = await this._authenticatedFetch(`${API_BASE_URL}/api/services/${id}`);
+        const response = await fetch(`${API_BASE_URL}/api/services/${id}`, {          
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to fetch service');
+        }
 
         // ✅ Normalize: if data is object (not wrapped), wrap it
         if (result.data && !result.data.service) {
@@ -183,15 +177,6 @@ const API = {
                 message: result.message || 'Service retrieved successfully'
             };
         }
-        // const response = await fetch(`${API_BASE_URL}/api/services/${id}`, {
-        //     credentials: 'include'
-        // });
-
-        // const result = await response.json();
-
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to fetch service');
-        // }
 
         return result; // { success: true, data: { service }, message: "..." }
     },
@@ -199,27 +184,24 @@ const API = {
     async createService(serviceData) {
         if (USE_MOCK) {
             return this._mockCreateService(serviceData);
+        }   
+
+        const response = await fetch(`${API_BASE_URL}/api/services`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(serviceData),
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to create service');
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/services`, {
-            method: 'POST',
-            body: JSON.stringify(serviceData)
-        });        
-
-        // const response = await fetch(`${API_BASE_URL}/api/services`, {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(serviceData),
-        //     credentials: 'include'
-        // });
-
-        // const result = await response.json();
-
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to create service');
-        // }
-
-        // return result;
+        return result;
     },
 
     async updateService(id, serviceData) {
@@ -227,24 +209,22 @@ const API = {
             return this._mockUpdateService(id, serviceData);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/services/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/services/${id}`, {
             method: 'PATCH',
-            body: JSON.stringify(serviceData)
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(serviceData),
+            credentials: 'include'
         });
-        // const response = await fetch(`${API_BASE_URL}/api/services/${id}`, {
-        //     method: 'PATCH',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(serviceData),
-        //     credentials: 'include'
-        // });
 
-        // const result = await response.json();
+        const result = await response.json();
 
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to update service');
-        // }
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to update service');
+        }
 
-        // return result;
+        return result;
     },
 
     async updateServiceStatus(id, status) {
@@ -252,24 +232,20 @@ const API = {
             return this._mockUpdateServiceStatus(id, status);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/services/${id}/status`, {
+        const response = await fetch(`${API_BASE_URL}/api/services/${id}/status`, {
             method: 'PATCH',
-            body: JSON.stringify({ status })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+            credentials: 'include'
         });
-        // const response = await fetch(`${API_BASE_URL}/api/services/${id}/status`, {
-        //     method: 'PATCH',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ status }),
-        //     credentials: 'include'
-        // });
 
-        // const result = await response.json();
+        const result = await response.json();
 
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to update service status');
-        // }
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to update service status');
+        }
 
-        // return result;
+        return result;
     },
 
     async deleteService(id) {
@@ -277,21 +253,18 @@ const API = {
             return this._mockDeleteService(id);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/services/${id}`, {
-            method: 'DELETE'
+        const response = await fetch(`${API_BASE_URL}/api/services/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
         });
-        // const response = await fetch(`${API_BASE_URL}/api/services/${id}`, {
-        //     method: 'DELETE',
-        //     credentials: 'include'
-        // });
 
-        // const result = await response.json();
+        const result = await response.json();
 
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to delete service');
-        // }
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to delete service');
+        }
 
-        // return result;
+        return result;
     },
 
     // ==========================================
@@ -304,11 +277,20 @@ const API = {
         }
 
         const params = new URLSearchParams();
+        
         if (filters.service_id) params.append('service_id', filters.service_id);
         if (filters.status) params.append('status', filters.status);
         if (filters.severity) params.append('severity', filters.severity);
 
-        const result = await this._authenticatedFetch(`${API_BASE_URL}/api/incidents?${params}`);
+        const response = await fetch(`${API_BASE_URL}/api/incidents?${params}`, {
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to fetch incidents');
+        }
 
         // ✅ Normalize: if data is array, wrap it
         if (Array.isArray(result.data)) {
@@ -318,15 +300,6 @@ const API = {
                 message: result.message || 'Incidents retrieved successfully'
             };
         }
-        // const response = await fetch(`${API_BASE_URL}/api/incidents?${params}`, {
-        //     credentials: 'include'
-        // });
-
-        // const result = await response.json();
-
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to fetch incidents');
-        // }
 
         return result; // { success: true, data: { incidents: [...] }, message: "..." }
     },
@@ -336,7 +309,15 @@ const API = {
             return this._mockGetIncidentById(id);
         }
 
-        const result = await this._authenticatedFetch(`${API_BASE_URL}/api/incidents/${id}`);
+        const response = await fetch(`${API_BASE_URL}/api/incidents/${id}`, {
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to fetch incident');
+        }
 
         // ✅ Normalize
         if (result.data && !result.data.incident) {
@@ -346,15 +327,6 @@ const API = {
                 message: result.message || 'Incident retrieved successfully'
             };
         }
-        // const response = await fetch(`${API_BASE_URL}/api/incidents/${id}`, {
-        //     credentials: 'include'
-        // });
-
-        // const result = await response.json();
-
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to fetch incident');
-        // }
 
         return result; // { success: true, data: { incident }, message: "..." }
     },
@@ -364,24 +336,22 @@ const API = {
             return this._mockCreateIncident(incidentData);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/incidents`, {
+        const response = await fetch(`${API_BASE_URL}/api/incidents`, {
             method: 'POST',
-            body: JSON.stringify(incidentData)
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(incidentData),
+            credentials: 'include'
         });
-        // const response = await fetch(`${API_BASE_URL}/api/incidents`, {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(incidentData),
-        //     credentials: 'include'
-        // });
 
-        // const result = await response.json();
+        const result = await response.json();
 
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to create incident');
-        // }
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to create incident');
+        }
 
-        // return result;
+        return result;
     },
 
     async updateIncident(id, incidentData) {
@@ -389,24 +359,22 @@ const API = {
             return this._mockUpdateIncident(id, incidentData);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/incidents/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/incidents/${id}`, {
             method: 'PATCH',
-            body: JSON.stringify(incidentData)
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(incidentData),
+            credentials: 'include'
         });
-        // const response = await fetch(`${API_BASE_URL}/api/incidents/${id}`, {
-        //     method: 'PATCH',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(incidentData),
-        //     credentials: 'include'
-        // });
 
-        // const result = await response.json();
+        const result = await response.json();
 
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to update incident');
-        // }
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to update incident');
+        }
 
-        // return result;
+        return result;
     },
 
     async resolveIncident(id, resolutionData) {
@@ -414,24 +382,20 @@ const API = {
             return this._mockResolveIncident(id, resolutionData);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/incidents/${id}/resolve`, {
+        const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/resolve`, {
             method: 'PATCH',
-            body: JSON.stringify(resolutionData)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(resolutionData),
+            credentials: 'include'
         });
-        // const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/resolve`, {
-        //     method: 'PATCH',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(resolutionData),
-        //     credentials: 'include'
-        // });
 
-        // const result = await response.json();
+        const result = await response.json();
 
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to resolve incident');
-        // }
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to resolve incident');
+        }
 
-        // return result;
+        return result;
     },
 
     async deleteIncident(id) {
@@ -439,21 +403,18 @@ const API = {
             return this._mockDeleteIncident(id);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/incidents/${id}`, {
-            method: 'DELETE'
+        const response = await fetch(`${API_BASE_URL}/api/incidents/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
         });
-        // const response = await fetch(`${API_BASE_URL}/api/incidents/${id}`, {
-        //     method: 'DELETE',
-        //     credentials: 'include'
-        // });
 
-        // const result = await response.json();
+        const result = await response.json();
 
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to delete incident');
-        // }
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to delete incident');
+        }
 
-        //return result;
+        return result;
     },
 
     // ==========================================
@@ -465,9 +426,17 @@ const API = {
             return this._mockGetIncidentUpdates(incidentId);
         }
 
-        const result = await this._authenticatedFetch(`${API_BASE_URL}/api/incidents/${incidentId}/updates`);
+        const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}/updates`, {
+            credentials: 'include'
+        });
 
-        // ✅ Normalize
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to fetch incident updates');
+        }
+
+                // ✅ Normalize
         if (Array.isArray(result.data)) {
             return {
                 success: true,
@@ -475,15 +444,6 @@ const API = {
                 message: result.message || 'Updates retrieved successfully'
             };
         }
-        // const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}/updates`, {
-        //     credentials: 'include'
-        // });
-
-        // const result = await response.json();
-
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to fetch incident updates');
-        // }
 
         return result; // { success: true, data: { updates: [...] }, message: "..." }
     },
@@ -493,24 +453,20 @@ const API = {
             return this._mockAddIncidentUpdate(incidentId, message);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/incidents/${incidentId}/updates`, {
+        const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}/updates`, {
             method: 'POST',
-            body: JSON.stringify({ message })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message }),
+            credentials: 'include'
         });
-        // const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}/updates`, {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ message }),
-        //     credentials: 'include'
-        // });
 
-        // const result = await response.json();
+        const result = await response.json();
 
-        // if (!response.ok) {
-        //     throw new Error(result.message || 'Failed to add update');
-        // }
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to add update');
+        }
 
-       // return result;
+       return result;
     },
 
     // ==========================================
@@ -549,7 +505,15 @@ const API = {
         if (filters.role) params.append('role', filters.role);
         if (filters.search) params.append('search', filters.search);
 
-        const result = await this._authenticatedFetch(`${API_BASE_URL}/api/users?${params}`);
+        const response = await fetch(`${API_BASE_URL}/api/users?${params}`, {
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to fetch users');
+        }
 
         // ✅ Normalize
         if (Array.isArray(result.data)) {
@@ -568,7 +532,15 @@ const API = {
             return this._mockGetUserById(id);
         }
 
-        const result = await this._authenticatedFetch(`${API_BASE_URL}/api/users/${id}`);
+        const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to fetch user');
+        }
 
         // ✅ Normalize
         if (result.data && !result.data.user) {
@@ -587,10 +559,22 @@ const API = {
             return this._mockUpdateUser(id, userData);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/users/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
             method: 'PATCH',
-            body: JSON.stringify(userData)
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData),
+            credentials: 'include'
         });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to update user');
+        }
+
+        return result;
     },
 
     async deleteUser(id) {
@@ -598,9 +582,18 @@ const API = {
             return this._mockDeleteUser(id);
         }
 
-        return await this._authenticatedFetch(`${API_BASE_URL}/api/users/${id}`, {
-            method: 'DELETE'
+        const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
         });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to delete user');
+        }
+
+        return result;
     },
 
     // ==========================================
