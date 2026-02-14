@@ -146,6 +146,81 @@
         window.location.href = 'dashboard.html';
     }
 
+    document.addEventListener('DOMContentLoaded', () => {
+  const registerForm = document.getElementById('registerForm');
+  
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // دریافت مقادیر فرم
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const fullName = document.getElementById('fullName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      
+      // اعتبارسنجی
+      if (!username || !password || !fullName || !email) {
+        Utils.showAlert('Please fill all fields', 'error');
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        Utils.showAlert('Passwords do not match', 'error');
+        return;
+      }
+      
+      if (password.length < 6) {
+        Utils.showAlert('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      try {
+        Utils.showLoading();
+        
+        // فراخوانی API
+        const result = await API.register({
+          username,
+          password,
+          full_name: fullName,
+          email
+        });
+        
+        console.log('Register response:', result);
+        
+        // ✅ FIX: ذخیره‌سازی صحیح token و user
+        if (result.success && result.data) {
+          const { token, user } = result.data;
+          
+          if (!token || !user) {
+            throw new Error('Invalid response: missing token or user');
+          }
+          
+          // ✅ ذخیره صحیح
+          Auth.saveAuth(token, user);
+          
+          Utils.showAlert(result.message || 'Registration successful!', 'success');
+          
+          // هدایت به داشبورد
+          setTimeout(() => {
+            window.location.href = '/pages/dashboard.html';
+          }, 1000);
+          
+        } else {
+          throw new Error(result.message || 'Registration failed');
+        }
+        
+      } catch (error) {
+        console.error('Registration error:', error);
+        Utils.showAlert(error.message || 'Registration failed. Please try again.', 'error');
+      } finally {
+        Utils.hideLoading();
+      }
+    });
+  }
+});
+
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
