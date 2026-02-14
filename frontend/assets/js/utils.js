@@ -147,7 +147,8 @@ const Utils = {
     },
 
     validatePassword(password) {
-        return password && password.length >= 8;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#]).{8,}$/;
+        return passwordRegex && password.length >= 8;
     },
 
     validateUsername(username) {

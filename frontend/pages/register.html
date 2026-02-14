@@ -236,7 +236,7 @@
         }
 
         if (!Utils.validatePassword(password)) {
-            Utils.showAlert('Password must be at least 8 characters', 'error');
+            Utils.showAlert('Password must be at least 8 characters and include uppercase, lowercase, number, and special character (@$!%*?&#)', 'error');
             return;
         }
 
