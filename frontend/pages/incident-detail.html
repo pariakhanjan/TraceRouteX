@@ -232,500 +232,509 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="../index.html" class="navbar-brand">
-                <span class="navbar-logo">🌐</span>
-                <span class="navbar-title">TracerouteX</span>
-            </a>
-            <div class="navbar-menu">
-                <a href="dashboard.html" class="navbar-link">
-                    <span>📊</span> Dashboard
-                </a>
-                <div class="navbar-divider"></div>
-                <div class="navbar-user">
-                    <span class="user-info" id="userInfo">Loading...</span>
-                    <button class="btn btn-sm btn-secondary" id="logoutBtn">Logout</button>
-                </div>
-            </div>
+<nav class="navbar">
+    <div class="container navbar-content">
+        <a href="../index.html" class="logo">🌐 TracerouteX</a>
+        <div class="nav-links">
+            <a href="dashboard.html">📊 Dashboard</a>
+            <span class="user-info" id="userInfo">
+                <span id="loadingUser">Loading...</span>
+            </span>
+            <button class="btn btn-danger btn-sm" id="logoutBtn">Logout</button>
         </div>
-    </nav>
+    </div>
+</nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="container incident-detail-container">
-            <!-- Breadcrumb -->
-            <div class="breadcrumb">
-                <a href="dashboard.html">Dashboard</a>
-                <span class="breadcrumb-separator">/</span>
-                <span>Incident Details</span>
-            </div>
+<div class="container" style="margin-top: 100px;">
+    <div class="breadcrumb">
+        <a href="dashboard.html">Dashboard</a>
+        <span>/</span>
+        <span>Incident Details</span>
+    </div>
 
-            <!-- Loading State -->
-            <div id="loadingState" class="loading-container">
-                <div class="loading-spinner"></div>
-            </div>
+    <div id="errorMessage" class="alert alert-danger" style="display: none;">
+        <strong>Error:</strong> <span id="errorText"></span>
+    </div>
 
-            <!-- Error State -->
-            <div id="errorState" class="hidden">
-                <div class="alert alert-error">
-                    <strong>Error:</strong> <span id="errorMessage"></span>
-                </div>
-                <button class="btn btn-primary" onclick="location.href='dashboard.html'">
-                    ← Back to Dashboard
-                </button>
-            </div>
+    <div class="card" style="margin-bottom: 30px;">
+        <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">
+            ← Back to Dashboard
+        </button>
 
-            <!-- Incident Content -->
-            <div id="incidentContent" class="hidden">
-                <!-- Incident Header -->
-                <div id="incidentHeader" class="incident-header-section">
-                    <!-- Dynamic content will be inserted here -->
-                </div>
-
-                <!-- Update Form (Only for Admin/Engineer) -->
-                <div id="updateFormSection" class="update-form-section hidden">
-                    <h3 class="card-title">Add Update</h3>
-                    <form id="updateForm">
-                        <div class="form-group">
-                            <label for="updateMessage" class="form-label">Update Message *</label>
-                            <textarea 
-                                id="updateMessage" 
-                                class="form-textarea" 
-                                rows="4"
-                                placeholder="Describe the current status or actions taken..."
-                                required
-                            ></textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">
-                                <span>📝</span> Post Update
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Timeline Section -->
-                <div class="timeline-section">
-                    <h3 class="card-title">Timeline</h3>
-                    <div id="timelineContainer">
-                        <!-- Timeline will be dynamically loaded -->
-                    </div>
-                </div>
-            </div>
+        <div id="incidentDetails" style="margin-top: 20px;">
+            <!-- Incident details will be loaded here -->
         </div>
-    </main>
+    </div>
 
-    <!-- Modal: Resolve Incident -->
-    <div id="resolveModal" class="modal-overlay hidden">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Resolve Incident</h3>
-                <button class="modal-close" onclick="closeResolveModal()">×</button>
+    <!-- Add Update Section (for Engineers and Admins) -->
+    <div class="card" id="addUpdateSection" style="display: none;">
+        <h3>Add Update</h3>
+        <form id="addUpdateForm">
+            <div class="form-group">
+                <label for="updateMessage">Update Message <span style="color: red;">*</span></label>
+                <textarea id="updateMessage" name="message" rows="4" required
+                          placeholder="Enter update message..."></textarea>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to resolve this incident?</p>
+            <button type="submit" class="btn btn-primary">📝 Post Update</button>
+        </form>
+    </div>
+
+    <!-- Timeline Section -->
+    <div class="card">
+        <h3>Timeline</h3>
+        <div id="timeline">
+            <!-- Timeline will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Resolve Incident Modal (for Engineers and Admins) -->
+    <div id="resolveModal" class="modal">
+        <div class="modal-content">
+            <h2>Resolve Incident</h2>
+            <p>Are you sure you want to resolve this incident?</p>
+            <form id="resolveForm">
                 <div class="form-group">
-                    <label for="resolutionNotes" class="form-label">Resolution Notes (Optional)</label>
-                    <textarea 
-                        id="resolutionNotes" 
-                        class="form-textarea" 
-                        rows="3"
-                        placeholder="Describe how the incident was resolved..."
-                    ></textarea>
+                    <label for="rootCause">Root Cause</label>
+                    <textarea id="rootCause" name="root_cause" rows="3"></textarea>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeResolveModal()">Cancel</button>
-                <button class="btn btn-success" id="confirmResolveBtn">
-                    <span>✓</span> Resolve Incident
-                </button>
-            </div>
+                <div class="form-group">
+                    <label for="preventionNotes">Prevention Notes</label>
+                    <textarea id="preventionNotes" name="prevention_notes" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="resolutionNotes">Resolution Notes (Optional)</label>
+                    <textarea id="resolutionNotes" name="resolution_notes" rows="3"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeResolveModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">✓ Resolve Incident</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Modal: Delete Incident -->
-    <div id="deleteModal" class="modal-overlay hidden">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Delete Incident</h3>
-                <button class="modal-close" onclick="closeDeleteModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <p><strong>Warning:</strong> This action cannot be undone. All updates associated with this incident will also be deleted.</p>
-                <p>Are you sure you want to delete this incident?</p>
-            </div>
-            <div class="modal-footer">
+    <!-- Delete Incident Modal (for Admins only) -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h2>Delete Incident</h2>
+            <p><strong>Warning:</strong> This action cannot be undone. All updates associated with this incident will
+                also be deleted.</p>
+            <p>Are you sure you want to delete this incident?</p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                 <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-                <button class="btn btn-danger" id="confirmDeleteBtn">
-                    <span>🗑️</span> Delete Incident
-                </button>
+                <button class="btn btn-danger" onclick="confirmDelete()">🗑️ Delete Incident</button>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="../assets/js/utils.js"></script>
-    <script src="../assets/js/auth.js"></script>
-    <script src="../assets/js/api.js"></script>
-    <script>
-        // Global state
-        let currentIncident = null;
-        let incidentId = null;
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script src="../assets/js/utils.js"></script>
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            Auth.requireAuth();
-            Auth.displayUserInfo();
-            await Utils.checkAuth();
+<script>
+    let currentIncident = null;
+    let currentUser = null;
 
-            // Get incident ID from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            currentIncidentId = urlParams.get('id');
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Display user info
+        Auth.requireAuth();      // ← اول بررسی login
+        Auth.displayUserInfo(); 
+        const user = Auth.getUser();
+        // Get incident ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const incidentId = urlParams.get('id');
 
-            if (!currentIncidentId) {
-                Utils.showError('No incident ID provided');
-                setTimeout(() => window.location.href = 'dashboard.html', 2000);
-                return;
-            }
-
-            // Load incident data
-            await loadIncident();
-            await loadTimeline();
-
-            // Event listeners
-            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-            document.getElementById('updateForm').addEventListener('submit', handleAddUpdate);
-            document.getElementById('confirmResolveBtn').addEventListener('click', handleResolveIncident);
-            document.getElementById('confirmDeleteBtn').addEventListener('click', handleDeleteIncident);
-        });
+        if (!incidentId) {
+            showError('Incident ID not provided');
+            return;
+        }
 
         // Load incident details
-        async function loadIncident() {
-            try {
-                showLoading(true);
-                currentIncident = await API.getIncidentById(incidentId);
-                renderIncidentHeader(currentIncident);
-                showLoading(false);
-            } catch (error) {
-                console.error('Error loading incident:', error);
-                showError(error.message || 'Failed to load incident');
-                showLoading(false);
-            }
-        }
-
-        // Render incident header
-        function renderIncidentHeader(incident) {
-            const user = Auth.getUser();
-            const canEdit = Auth.hasRole('admin', 'engineer');
-            const isAdmin = Auth.hasRole('admin');
-            const isOpen = incident.status === 'open';
-
-            const headerHTML = `
-                <div class="incident-title-row">
-                    <div class="incident-title-group">
-                        <h1 class="incident-main-title">${escapeHtml(incident.title)}</h1>
-                        <div class="incident-badges-row">
-                            <span class="badge badge-${getSeverityClass(incident.severity)}">
-                                ${Utils.translateSeverity(incident.severity)}
-                            </span>
-                            <span class="badge badge-${getStatusClass(incident.status)}">
-                                ${Utils.translateIncidentStatus(incident.status)}
-                            </span>
-                            ${incident.is_public ? '<span class="badge badge-info">Public</span>' : ''}
-                        </div>
-                    </div>
-                    <div class="action-buttons">
-                        ${isOpen && canEdit ? `
-                            <button class="btn btn-success" onclick="openResolveModal()">
-                                <span>✓</span> Resolve
-                            </button>
-                        ` : ''}
-                        ${isAdmin ? `
-                            <button class="btn btn-danger" onclick="openDeleteModal()">
-                                <span>🗑️</span> Delete
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-                
-                <div class="incident-description-box">
-                    <p>${escapeHtml(incident.description)}</p>
-                </div>
-
-                <div class="incident-meta-grid">
-                    <div class="meta-item">
-                        <div class="meta-label">Service</div>
-                        <div class="meta-value">
-                            <a href="service-detail.html?id=${incident.service_id}" style="color: var(--primary-color); text-decoration: none;">
-                                ${escapeHtml(incident.service_name || 'Unknown Service')}
-                            </a>
-                        </div>
-                    </div>
-                    <div class="meta-item">
-                        <div class="meta-label">Created By</div>
-                        <div class="meta-value">${escapeHtml(incident.created_by_name || 'Unknown')}</div>
-                    </div>
-                    <div class="meta-item">
-                        <div class="meta-label">Created At</div>
-                        <div class="meta-value">${Utils.formatDateTime(incident.created_at)}</div>
-                    </div>
-                    ${incident.resolved_at ? `
-                        <div class="meta-item">
-                            <div class="meta-label">Resolved At</div>
-                            <div class="meta-value">${Utils.formatDateTime(incident.resolved_at)}</div>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-
-            const headerSection = document.getElementById('incidentHeader');
-            headerSection.innerHTML = headerHTML;
-            headerSection.className = `incident-header-section ${incident.severity}`;
-
-            // Show update form for admin/engineer if incident is open
-            if (canEdit && isOpen) {
-                document.getElementById('updateFormSection').classList.remove('hidden');
-            }
-
-            document.getElementById('incidentContent').classList.remove('hidden');
-        }
+        await loadIncidentDetails(incidentId);
 
         // Load timeline
-        async function loadTimeline() {
-            try {
-                if (!currentIncidentId) {
-                    throw new Error('No incident ID available');
-                }
+        await loadTimeline(incidentId);
 
-                const response = await API.getIncidentUpdates(currentIncidentId);
-        
-                if (!response || !response.success) {
-                    throw new Error('Invalid response from server');
-                }
+        // Show add update form for engineers and admins
+        if (user.role === 'engineer' || user.role === 'admin') {
+            document.getElementById('addUpdateSection').style.display = 'block';
+        }
 
-                const updates = response.data || [];
-                const container = document.getElementById('timelineContainer');
-        
-                if (!container) {
-                    console.error('Timeline container not found');
-                    return;
-                }
+        // Setup event listeners
+        setupEventListeners(incidentId);
+    });
 
-                if (updates.length === 0) {
-                    container.innerHTML = '<p class="no-data">No updates yet</p>';
-                    return;
-                }
+    async function loadIncidentDetails(incidentId) {
+        try {
+            const response = await API.getIncidentById(incidentId);
 
-                container.innerHTML = updates.map(update => `
-                    <div class="timeline-item">
-                        <div class="timeline-header">
-                            <span class="badge badge-${update.status}">${Utils.translateIncidentStatus(update.status)}</span>
-                            <span class="timeline-date">${Utils.formatDate(update.created_at)}</span>
-                        </div>
-                        <div class="timeline-message">${update.message || 'No message'}</div>
-                        <div class="timeline-footer">
-                            <span>by ${update.created_by_username || 'Unknown'}</span>
-                        </div>
-                    </div>
-                `).join('');
-        
-            } catch (error) {
-                console.error('Timeline error:', error);
-                const container = document.getElementById('timelineContainer');
-                if (container) {
-                    container.innerHTML = '<p class="error-message">Failed to load timeline</p>';
-                }
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to load incident');
+            }
+
+            currentIncident = response.data.incident;
+            renderIncidentDetails(currentIncident);
+
+        } catch (error) {
+            console.error('Error loading incident:', error);
+            showError(error.message);
+        }
+    }
+
+    function renderIncidentDetails(incident) {
+        const detailsDiv = document.getElementById('incidentDetails');
+        const user = Auth.getUser();
+        const severityColors = {
+            low: '#28a745',
+            medium: '#ffc107',
+            high: '#fd7e14',
+            critical: '#dc3545'
+        };
+
+        const statusColors = {
+            open: '#007bff',
+            investigating: '#ffc107',
+            resolved: '#28a745'
+        };
+
+        const statusLabels = {
+            open: 'Open',
+            investigating: 'Investigating',
+            resolved: 'Resolved'
+        };
+
+        let actionsHTML = '';
+        if (user.role === 'engineer' || user.role === 'admin') {
+            if (incident.status !== 'resolved') {
+                actionsHTML = `
+                    <button class="btn btn-success" onclick="openResolveModal()">
+                        ✓ Resolve Incident
+                    </button>
+                `;
             }
         }
 
+        if (user.role === 'admin') {
+            actionsHTML += `
+                <button class="btn btn-danger" onclick="openDeleteModal()" style="margin-left: 10px;">
+                    🗑️ Delete Incident
+                </button>
+            `;
+        }
 
-
-        // Render timeline
-        function renderTimeline(updates) {
-            const container = document.getElementById('timelineContainer');
-
-            if (!updates || updates.length === 0) {
-                container.innerHTML = `
-                    <div class="timeline-empty">
-                        <div class="timeline-empty-icon">📝</div>
-                        <p>No updates yet</p>
+        detailsDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                <div>
+                    <h2 style="margin: 0 0 10px 0;">${utils.escapeHtml(incident.title)}</h2>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <span class="badge" style="background: ${severityColors[incident.severity]};">
+                            ${incident.severity.toUpperCase()}
+                        </span>
+                        <span class="badge" style="background: ${statusColors[incident.status]};">
+                            ${statusLabels[incident.status]}
+                        </span>
+                        ${incident.is_published ? '<span class="badge" style="background: #6c757d;">📢 Public</span>' : ''}
                     </div>
-                `;
-                return;
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    ${actionsHTML}
+                </div>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="margin: 0; line-height: 1.6;">${utils.escapeHtml(incident.description)}</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div>
+                    <strong>Service:</strong><br>
+                    <a href="service-detail.html?id=${incident.service_id}" style="color: #007bff;">
+                        ${utils.escapeHtml(incident.service_name || 'Unknown Service')}
+                    </a>
+                </div>
+                <div>
+                    <strong>Created By:</strong><br>
+                    ${utils.escapeHtml(incident.creator_username || 'Unknown')}
+                </div>
+                <div>
+                    <strong>Created At:</strong><br>
+                    ${utils.formatDateTime(incident.created_at)}
+                </div>
+                ${incident.status === 'resolved' ? `
+                <div>
+                    <strong>Resolved By:</strong><br>
+                    ${utils.escapeHtml(incident.resolver_username || 'Unknown')}
+                </div>
+                <div>
+                    <strong>Resolved At:</strong><br>
+                    ${utils.formatDateTime(incident.resolved_at)}
+                </div>
+                ${incident.root_cause ? `
+                <div style="grid-column: 1 / -1;">
+                    <strong>Root Cause:</strong><br>
+                    <p style="margin-top: 5px; background: #fff; padding: 10px; border-radius: 5px; border-left: 3px solid #28a745;">
+                        ${utils.escapeHtml(incident.root_cause)}
+                    </p>
+                </div>
+                ` : ''}
+                ${incident.prevention_notes ? `
+                <div style="grid-column: 1 / -1;">
+                    <strong>Prevention Notes:</strong><br>
+                    <p style="margin-top: 5px; background: #fff; padding: 10px; border-radius: 5px; border-left: 3px solid #007bff;">
+                        ${utils.escapeHtml(incident.prevention_notes)}
+                    </p>
+                </div>
+                ` : ''}
+                ` : ''}
+            </div>
+        `;
+    }
+
+    async function loadTimeline(incidentId) {
+        try {
+            const response = await API.getIncidentUpdates(incidentId);
+
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to load timeline');
             }
 
-            const timelineHTML = `
-                <div class="timeline">
-                    ${updates.map(update => `
-                        <div class="timeline-item">
-                            <div class="timeline-marker"></div>
-                            <div class="timeline-content">
-                                <div class="timeline-header">
-                                    <span class="timeline-author">
-                                        ${escapeHtml(update.created_by_name || 'Unknown User')}
-                                    </span>
-                                    <span class="timeline-date">
-                                        ${Utils.formatRelativeTime(update.created_at)}
-                                    </span>
-                                </div>
-                                <div class="timeline-message">
-                                    ${escapeHtml(update.message)}
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
+            // ✅ Handle both response formats
+            let updates = [];
+            
+            if (response.data && response.data.updates) {
+                updates = response.data.updates;
+            } else if (response.data && Array.isArray(response.data)) {
+                updates = response.data;
+            } else if (Array.isArray(response)) {
+                updates = response;
+            }
+
+            // ✅ Ensure updates is an array
+            if (!Array.isArray(updates)) {
+                console.error('Updates is not an array:', updates);
+                updates = [];
+            }
+
+            renderTimeline(updates);
+
+        } catch (error) {
+            console.error('Timeline error:', error);
+            document.getElementById('timeline').innerHTML = `
+                <div class="alert alert-danger">
+                    <p>${Utils.escapeHtml(u.message)}</p>
                 </div>
             `;
+        }
+    }
 
-            container.innerHTML = timelineHTML;
+    function renderTimeline(updates) {
+        const timelineDiv = document.getElementById('timeline');
+
+        if (!updates || updates.length === 0) {
+            timelineDiv.innerHTML = '<p style="color: #6c757d;">No updates yet.</p>';
+            return;
         }
 
-        // Handle add update
-        async function handleAddUpdate(e) {
-            e.preventDefault();
-            const message = document.getElementById('updateMessage').value.trim();
+        // Sort updates by created_at (newest first)
+        const sortedUpdates = [...updates].sort((a, b) => 
+            new Date(b.created_at) - new Date(a.created_at)
+        );
 
-            if (!message) {
-                Utils.showAlert('Please enter an update message', 'error');
-                return;
+        const timelineHTML = sortedUpdates.map(update => `
+            <div class="timeline-item" style="border-left: 3px solid #007bff; padding-left: 20px; margin-bottom: 25px; position: relative;">
+                <div style="position: absolute; left: -8px; top: 0; width: 12px; height: 12px; background: #007bff; border-radius: 50%; border: 2px solid white;"></div>
+                <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">
+                    ${utils.formatDateTime(update.created_at)}
+                    ${update.created_by ? ` • by ${utils.escapeHtml(update.creator_username || 'User #' + update.created_by)}` : ''}
+                </div>
+                <p style="margin: 0; line-height: 1.6;">${utils.escapeHtml(update.message)}</p>
+            </div>
+        `).join('');
+
+        timelineDiv.innerHTML = timelineHTML;
+    }
+
+    function setupEventListeners(incidentId) {
+        // Logout button
+        document.getElementById('logoutBtn').addEventListener('click', utils.logout);
+
+        // Add update form
+        const addUpdateForm = document.getElementById('addUpdateForm');
+        if (addUpdateForm) {
+            addUpdateForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleAddUpdate(incidentId);
+            });
+        }
+
+        // Resolve form
+        const resolveForm = document.getElementById('resolveForm');
+        if (resolveForm) {
+            resolveForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleResolveIncident(incidentId);
+            });
+        }
+    }
+
+    async function handleAddUpdate(incidentId) {
+        const message = document.getElementById('updateMessage').value.trim();
+
+        if (!message) {
+            showError('Please enter an update message');
+            return;
+        }
+
+        try {
+            const response = await API.addIncidentUpdate(incidentId, message);
+
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to add update');
             }
 
-            try {
-                Utils.showLoading(true);
-                await API.createIncidentUpdate(incidentId, { message });
-                Utils.showAlert('Update added successfully', 'success');
-                
-                // Reset form
-                document.getElementById('updateForm').reset();
-                
-                // Reload timeline
-                await loadTimeline();
-                Utils.showLoading(false);
-            } catch (error) {
-                console.error('Error adding update:', error);
-                Utils.showAlert(error.message || 'Failed to add update', 'error');
-                Utils.showLoading(false);
-            }
+            // Clear form
+            document.getElementById('updateMessage').value = '';
+
+            // Show success message
+            showSuccess('Update added successfully');
+
+            // Reload timeline
+            await loadTimeline(incidentId);
+
+        } catch (error) {
+            console.error('Error adding update:', error);
+            showError(error.message);
         }
+    }
 
-        // Open resolve modal
-        function openResolveModal() {
-            document.getElementById('resolveModal').classList.remove('hidden');
-        }
+    async function handleResolveIncident(incidentId) {
+        const rootCause = document.getElementById('rootCause').value.trim();
+        const preventionNotes = document.getElementById('preventionNotes').value.trim();
+        const resolutionNotes = document.getElementById('resolutionNotes').value.trim();
 
-        // Close resolve modal
-        function closeResolveModal() {
-            document.getElementById('resolveModal').classList.add('hidden');
-            document.getElementById('resolutionNotes').value = '';
-        }
-
-        // Handle resolve incident
-        async function handleResolveIncident() {
-            const notes = document.getElementById('resolutionNotes').value.trim();
-
-            try {
-                Utils.showLoading(true);
-                
-                // Update incident status to resolved
-                await API.updateIncident(incidentId, { status: 'resolved' });
-
-                // Add resolution note if provided
-                if (notes) {
-                    await API.createIncidentUpdate(incidentId, {
-                        message: `✅ Incident Resolved\n\n${notes}`
-                    });
-                }
-
-                Utils.showAlert('Incident resolved successfully', 'success');
-                closeResolveModal();
-                
-                // Reload data
-                await loadIncident();
-                await loadTimeline();
-                Utils.showLoading(false);
-            } catch (error) {
-                console.error('Error resolving incident:', error);
-                Utils.showAlert(error.message || 'Failed to resolve incident', 'error');
-                Utils.showLoading(false);
-            }
-        }
-
-        // Open delete modal
-        function openDeleteModal() {
-            document.getElementById('deleteModal').classList.remove('hidden');
-        }
-
-        // Close delete modal
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.add('hidden');
-        }
-
-        // Handle delete incident
-        async function handleDeleteIncident() {
-            try {
-                Utils.showLoading(true);
-                await API.deleteIncident(incidentId);
-                Utils.showAlert('Incident deleted successfully', 'success');
-                
-                // Redirect to dashboard after short delay
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1000);
-            } catch (error) {
-                console.error('Error deleting incident:', error);
-                Utils.showAlert(error.message || 'Failed to delete incident', 'error');
-                Utils.showLoading(false);
-            }
-        }
-
-        // Show/hide loading
-        function showLoading(show) {
-            document.getElementById('loadingState').classList.toggle('hidden', !show);
-            document.getElementById('incidentContent').classList.toggle('hidden', show);
-        }
-
-        // Show error
-        function showError(message) {
-            document.getElementById('errorMessage').textContent = message;
-            document.getElementById('errorState').classList.remove('hidden');
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('incidentContent').classList.add('hidden');
-        }
-
-        // Helper functions
-        function getSeverityClass(severity) {
-            const classes = {
-                'critical': 'danger',
-                'high': 'warning',
-                'medium': 'info',
-                'low': 'success'
+        try {
+            const resolutionData = {
+                root_cause: rootCause || null,
+                prevention_notes: preventionNotes || null,
+                resolution_notes: resolutionNotes || null
             };
-            return classes[severity] || 'secondary';
-        }
 
-        function getStatusClass(status) {
-            return status === 'open' ? 'danger' : 'success';
-        }
+            const response = await API.resolveIncident(incidentId, resolutionData);
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Handle logout
-        async function handleLogout() {
-            try {
-                await API.logout();
-                Auth.logout();
-                window.location.href = 'login.html';
-            } catch (error) {
-                console.error('Logout error:', error);
-                Auth.logout();
-                window.location.href = 'login.html';
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to resolve incident');
             }
+
+            showSuccess('Incident resolved successfully');
+            closeResolveModal();
+
+            // Reload page to show updated details
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+
+        } catch (error) {
+            console.error('Error resolving incident:', error);
+            showError(error.message);
         }
-    </script>
+    }
+
+    async function confirmDelete() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const incidentId = urlParams.get('id');
+
+        try {
+            const response = await API.deleteIncident(incidentId);
+
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to delete incident');
+            }
+
+            showSuccess('Incident deleted successfully');
+            closeDeleteModal();
+
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1500);
+
+        } catch (error) {
+            console.error('Error deleting incident:', error);
+            showError(error.message);
+            closeDeleteModal();
+        }
+    }
+
+    function openResolveModal() {
+        document.getElementById('resolveModal').style.display = 'flex';
+    }
+
+    function closeResolveModal() {
+        document.getElementById('resolveModal').style.display = 'none';
+        document.getElementById('resolveForm').reset();
+    }
+
+    function openDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        errorText.textContent = message;
+        errorDiv.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showSuccess(message) {
+        // Create a temporary success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success';
+        successDiv.innerHTML = `<strong>Success:</strong> ${utils.escapeHtml(message)}`;
+        successDiv.style.position = 'fixed';
+        successDiv.style.top = '20px';
+        successDiv.style.right = '20px';
+        successDiv.style.zIndex = '9999';
+        successDiv.style.minWidth = '300px';
+
+        document.body.appendChild(successDiv);
+
+        setTimeout(() => {
+            successDiv.remove();
+        }, 3000);
+    }
+
+    // function displayUserInfo(user) {
+    //     const userInfoSpan = document.getElementById('userInfo');
+    //     const roleEmojis = {
+    //         admin: '👑',
+    //         engineer: '🔧',
+    //         viewer: '👁️'
+    //     };
+
+    //     userInfoSpan.innerHTML = `
+    //         ${roleEmojis[user.role] || '👤'} ${utils.escapeHtml(user.username)} 
+    //         <span style="color: #6c757d; font-size: 0.9em;">(${user.role})</span>
+    //     `;
+    // }
+
+    // Close modals when clicking outside
+    window.onclick = function (event) {
+        const resolveModal = document.getElementById('resolveModal');
+        const deleteModal = document.getElementById('deleteModal');
+
+        if (event.target === resolveModal) {
+            closeResolveModal();
+        }
+        if (event.target === deleteModal) {
+            closeDeleteModal();
+        }
+    };
+</script>
 </body>
 </html>

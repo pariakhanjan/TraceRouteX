@@ -151,6 +151,150 @@
     if (Auth.isLoggedIn()) {
         window.location.href = 'dashboard.html';
     }
+// =========================================
+    // LOGIN HANDLER - COMPLETE FIX
+    // =========================================
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginForm = document.getElementById('loginForm');
+      
+      if (!loginForm) {
+        console.error('❌ Login form not found!');
+        return;
+      }
+
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        console.log('🔐 Login form submitted');
+        
+        // دریافت مقادیر فرم
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        
+        if (!emailInput || !passwordInput) {
+          console.error('❌ Form inputs not found');
+          Utils.showAlert('Form error: inputs not found', 'error');
+          return;
+        }
+        
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        
+        console.log('📧 Attempting login for:', email);
+        
+        // اعتبارسنجی
+        if (!email || !password) {
+          Utils.showAlert('Please enter email and password', 'error');
+          return;
+        }
+        
+        try {
+          Utils.showLoading();
+          
+          console.log('🌐 Calling API.login...');
+          
+          // فراخوانی API
+          const result = await API.login({ 
+            email,
+            password 
+          });
+          
+          console.log('📦 API Response:', result);
+          console.log('  - success:', result.success);
+          console.log('  - data:', result.data);
+          
+          // ✅ بررسی response
+          if (result.success && result.data) {
+            const token = result.data.token;
+            const user  = result.data.user;
+            
+            console.log('🎫 Token:', token ? '✓ received' : '✗ missing');
+            console.log('👤 User:', user ? '✓ received' : '✗ missing');
+            
+            if (!token) {
+              throw new Error('No token received from server');
+            }
+            
+            if (!user) {
+              throw new Error('No user data received from server');
+            }
+            
+            // ✅ ذخیره‌سازی صحیح
+            console.log('💾 Saving auth data...');
+            console.log('  - Token length:', token.length);
+            console.log('  - User object:', JSON.stringify(user));
+
+            try {
+              Auth.saveAuth(token, user);
+            } catch (saveError) {
+              console.error('❌ Failed to save auth:', saveError);
+              throw new Error('Failed to save authentication data');
+            }
+            
+            // ✅ بررسی ذخیره‌سازی
+            const savedToken = localStorage.getItem('token');
+            const savedUser = localStorage.getItem('user');
+            
+            console.log('💾 Verification:');
+            console.log('  - Token saved:', savedToken ? '✓ YES' : '✗ NO');
+            console.log('  - Token value:', savedToken ? savedToken.substring(0, 30) + '...' : 'NULL');
+            console.log('  - User saved:', savedUser ? '✓ YES' : '✗ NO');
+            console.log('  - User value:', savedUser);
+            
+            if (!savedToken) {
+              throw new Error('Token was not saved to localStorage');
+            }
+            
+            if (!savedUser) {
+              throw new Error('User was not saved to localStorage');
+            }
+
+            let parsedUser;
+            try {
+              parsedUser = JSON.parse(savedUser);
+              console.log('  - User parsed:', parsedUser);
+              console.log('  - User role:', parsedUser.role);
+            } catch (parseError) {
+              console.error('❌ User cannot be parsed:', parseError);
+              throw new Error('User data is corrupted');
+            }
+            
+            // نمایش پیام موفقیت
+            Utils.showAlert(result.message || 'Login successful!', 'success');
+            
+            console.log('🔄 Redirecting to dashboard in 800ms...');
+            
+            // ✅ FIX: Redirect با تاخیر کوتاه برای نمایش پیام
+            setTimeout(() => {
+              console.log('🎯 Executing redirect NOW');
+              window.location.href = '/pages/dashboard.html';
+            }, 800);
+            
+          } else {
+            console.error('❌ Login failed:', result.message);
+            throw new Error(result.message || 'Login failed');
+          }
+          
+        } catch (error) {
+          console.error('💥 Login error:', error);
+          console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
+          
+          Utils.showAlert(
+            error.message || 'Login failed. Please try again.', 
+            'error'
+          );
+        } finally {
+          Utils.hideLoading();
+        }
+      });
+      
+      console.log('✅ Login handler initialized');
+    });
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();

@@ -49,7 +49,7 @@
                 <button class="btn btn-primary" onclick="window.location.href='service-detail.html?action=create'">
                     <span>➕</span> Add Service
                 </button>
-                <button class="btn btn-secondary" onclick="window.location.href='incident-detail.html?action=create'">
+                <button class="btn btn-secondary" onclick="window.location.href='incident-detail.html?id=${incidentId}'">
                     <span>🚨</span> Report Incident
                 </button>
             </div>
@@ -357,7 +357,7 @@
                     <td>
                       <button
                         class="btn btn-sm btn-secondary"
-                        onclick="viewIncident(${incident.id})"
+                        onclick="window.location.href='incident-detail.html?id=${incident.id}'"
                       >
                         View Details
                       </button>

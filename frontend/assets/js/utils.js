@@ -1,6 +1,11 @@
 // utils.js - Utility functions
 
 const Utils = {
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
     // ==========================================
     // Alert System
     // ==========================================
@@ -438,6 +443,10 @@ const Utils = {
 
 
 };
+
+// ✅ Make it available as both Utils and utils (for backward compatibility)
+const utils = Utils;
+
 
 // Add CSS for alerts dynamically
 if (!document.querySelector('#utils-styles')) {
