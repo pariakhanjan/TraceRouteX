@@ -478,7 +478,7 @@ const API = {
             return this._mockGetPublicStatus();
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/public/status`, {
+        const response = await fetch(`${API_BASE_URL}/public/status`, {
             credentials: 'include'
         });
         //const response = await fetch(`${API_BASE_URL}/public/status`);

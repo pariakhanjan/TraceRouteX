@@ -354,6 +354,10 @@
             color: var(--text-secondary);
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .public-navbar-container {
@@ -392,182 +396,172 @@
     </style>
 </head>
 <body>
-    <!-- Public Navbar -->
-    <nav class="public-navbar">
-        <div class="public-navbar-container">
-            <a href="../index.html" class="public-brand">
-                <span class="public-logo">🌐</span>
-                <div class="public-brand-text">
-                    <h1>TracerouteX</h1>
-                    <p>System Status Dashboard</p>
-                </div>
-            </a>
-            <a href="login.html" class="public-login-link">
-                🔐 Staff Login
-            </a>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="public-container">
-        <!-- Loading State -->
-        <div id="loadingState" class="loading-container">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">Loading system status...</p>
-        </div>
-
-        <!-- Content (Hidden initially) -->
-        <div id="statusContent" class="hidden">
-            <!-- Overall Status Banner -->
-            <div id="statusBanner" class="status-banner operational">
-                <div class="status-icon">✅</div>
-                <h2 class="status-title">All Systems Operational</h2>
-                <p class="status-description">All services are running smoothly.</p>
+<!-- Public Navbar -->
+<nav class="public-navbar">
+    <div class="public-navbar-container">
+        <a href="../index.html" class="public-brand">
+            <span class="public-logo">🌐</span>
+            <div class="public-brand-text">
+                <h1>TracerouteX</h1>
+                <p>System Status Dashboard</p>
             </div>
+        </a>
+        <a href="login.html" class="public-login-link">
+            🔐 Staff Login
+        </a>
+    </div>
+</nav>
 
-            <!-- Services Section -->
-            <section class="services-section">
-                <h3 class="section-title">Services Status</h3>
-                <div id="servicesList">
-                    <!-- Services will be dynamically loaded -->
-                </div>
-            </section>
+<!-- Main Content -->
+<main class="public-container">
+    <!-- Loading State -->
+    <div id="loadingState" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading system status...</p>
+    </div>
 
-            <!-- Active Incidents Section -->
-            <section class="incidents-section">
-                <h3 class="section-title">Active Incidents</h3>
-                <div id="incidentsList">
-                    <!-- Incidents will be dynamically loaded -->
-                </div>
-            </section>
+    <!-- Content (Hidden initially) -->
+    <div id="statusContent" class="hidden">
+        <!-- Overall Status Banner -->
+        <div id="statusBanner" class="status-banner operational">
+            <div class="status-icon">✅</div>
+            <h2 class="status-title">All Systems Operational</h2>
+            <p class="status-description">All services are running smoothly.</p>
         </div>
-    </main>
 
-    <!-- Footer -->
-    <footer class="public-footer">
-        <p>&copy; 2026 TracerouteX. All rights reserved.</p>
-        <p>Real-time system status monitoring</p>
-    </footer>
+        <!-- Services Section -->
+        <section class="services-section">
+            <h3 class="section-title">Services Status</h3>
+            <div id="servicesList">
+                <!-- Services will be dynamically loaded -->
+            </div>
+        </section>
 
-    <script>
-        // API Base URL
-        const API_BASE_URL = 'http://localhost:3000';
+        <!-- Active Incidents Section -->
+        <section class="incidents-section">
+            <h3 class="section-title">Active Incidents</h3>
+            <div id="incidentsList">
+                <!-- Incidents will be dynamically loaded -->
+            </div>
+        </section>
+    </div>
+</main>
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            await loadPublicStatus();
-            
-            // Auto refresh every 30 seconds
-            setInterval(loadPublicStatus, 30000);
-        });
+<!-- Footer -->
+<footer class="public-footer">
+    <p>&copy; 2026 TracerouteX. All rights reserved.</p>
+    <p>Real-time system status monitoring</p>
+</footer>
 
-        // Load public status
-        async function loadPublicStatus() {
-            try {
-                // Load services and incidents in parallel
-                const [services, incidents] = await Promise.all([
-                    fetchPublicServices(),
-                    fetchPublicIncidents()
-                ]);
+<script>
+    // ════════════════════════════════════════════════════════════════
+    // ✅ FIXED: Uses single /public/status endpoint
+    // ════════════════════════════════════════════════════════════════
+    const API_BASE_URL = 'http://localhost:3000';
 
-                // Calculate overall status
-                const overallStatus = calculateOverallStatus(services, incidents);
-                
-                // Render UI
-                renderStatusBanner(overallStatus);
-                renderServices(services);
-                renderIncidents(incidents);
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadPublicStatus();
+        // Auto refresh every 30 seconds
+        setInterval(loadPublicStatus, 30000);
+    });
 
-                // Show content
-                document.getElementById('loadingState').classList.add('hidden');
-                document.getElementById('statusContent').classList.remove('hidden');
-            } catch (error) {
-                console.error('Error loading status:', error);
-                showError();
-            }
-        }
+    // ✅ FIXED: Single fetch to /public/status, no parallel broken calls
+    async function loadPublicStatus() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/public/status`);
 
-        // Fetch public services
-        async function fetchPublicServices() {
-            const response = await fetch(`${API_BASE_URL}/api/public/services`);
             if (!response.ok) {
-                throw new Error('Failed to fetch services');
+                throw new Error(`Server error: ${response.status}`);
             }
-            return await response.json();
-        }
 
-        // Fetch public incidents
-        async function fetchPublicIncidents() {
-            const response = await fetch(`${API_BASE_URL}/api/public/incidents`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch incidents');
+            const result = await response.json();
+
+            if (!result.success || !result.data) {
+                throw new Error('Invalid response format from server');
             }
-            return await response.json();
+
+            const services = result.data.services || [];
+            const incidents = result.data.incidents || [];
+
+            // Calculate overall status
+            const overallStatus = calculateOverallStatus(services, incidents);
+
+            // Render UI
+            renderStatusBanner(overallStatus);
+            renderServices(services);
+            renderIncidents(incidents);
+
+            // Show content, hide loader
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('statusContent').classList.remove('hidden');
+
+        } catch (error) {
+            console.error('Error loading status:', error);
+            showError();
         }
+    }
 
-        // Calculate overall status
-        function calculateOverallStatus(services, incidents) {
-            // Check for any down services
-            const hasDownService = services.some(s => s.status === 'down');
-            if (hasDownService) return 'outage';
+    // Calculate overall status
+    function calculateOverallStatus(services, incidents) {
+        const hasDownService = services.some(s => s.status === 'down');
+        if (hasDownService) return 'outage';
 
-            // Check for degraded services or open critical incidents
-            const hasDegradedService = services.some(s => s.status === 'degraded');
-            const hasCriticalIncident = incidents.some(i => i.severity === 'critical' && i.status === 'open');
-            if (hasDegradedService || hasCriticalIncident) return 'degraded';
+        const hasDegradedService = services.some(s => s.status === 'degraded');
+        const hasCriticalIncident = incidents.some(i => i.severity === 'critical' && i.status === 'open');
+        if (hasDegradedService || hasCriticalIncident) return 'degraded';
 
-            return 'operational';
-        }
+        return 'operational';
+    }
 
-        // Render status banner
-        function renderStatusBanner(status) {
-            const banner = document.getElementById('statusBanner');
-            const statusConfig = {
-                operational: {
-                    icon: '✅',
-                    title: 'All Systems Operational',
-                    description: 'All services are running smoothly.',
-                    class: 'operational'
-                },
-                degraded: {
-                    icon: '⚠️',
-                    title: 'Partial System Outage',
-                    description: 'Some services are experiencing issues.',
-                    class: 'degraded'
-                },
-                outage: {
-                    icon: '❌',
-                    title: 'System Outage',
-                    description: 'Some services are currently unavailable.',
-                    class: 'outage'
-                }
-            };
+    // Render status banner
+    function renderStatusBanner(status) {
+        const banner = document.getElementById('statusBanner');
+        const statusConfig = {
+            operational: {
+                icon: '✅',
+                title: 'All Systems Operational',
+                description: 'All services are running smoothly.',
+                class: 'operational'
+            },
+            degraded: {
+                icon: '⚠️',
+                title: 'Partial System Outage',
+                description: 'Some services are experiencing issues.',
+                class: 'degraded'
+            },
+            outage: {
+                icon: '❌',
+                title: 'System Outage',
+                description: 'Some services are currently unavailable.',
+                class: 'outage'
+            }
+        };
 
-            const config = statusConfig[status];
-            banner.className = `status-banner ${config.class}`;
-            banner.innerHTML = `
+        const config = statusConfig[status];
+        banner.className = `status-banner ${config.class}`;
+        banner.innerHTML = `
                 <div class="status-icon">${config.icon}</div>
                 <h2 class="status-title">${config.title}</h2>
                 <p class="status-description">${config.description}</p>
             `;
-        }
+    }
 
-        // Render services
-        function renderServices(services) {
-            const container = document.getElementById('servicesList');
+    // Render services
+    function renderServices(services) {
+        const container = document.getElementById('servicesList');
 
-            if (!services || services.length === 0) {
-                container.innerHTML = `
+        if (!services || services.length === 0) {
+            container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">📋</div>
                         <p class="empty-title">No Services</p>
                         <p class="empty-description">No services are configured yet.</p>
                     </div>
                 `;
-                return;
-            }
+            return;
+        }
 
-            container.innerHTML = services.map(service => `
+        container.innerHTML = services.map(service => `
                 <div class="service-item">
                     <div class="service-info">
                         <div class="service-name">${escapeHtml(service.name)}</div>
@@ -579,27 +573,27 @@
                     </div>
                 </div>
             `).join('');
-        }
+    }
 
-        // Render incidents
-        function renderIncidents(incidents) {
-            const container = document.getElementById('incidentsList');
+    // Render incidents
+    function renderIncidents(incidents) {
+        const container = document.getElementById('incidentsList');
 
-            // Filter only open incidents
-            const openIncidents = incidents.filter(i => i.status === 'open');
+        // Filter only open incidents
+        const openIncidents = incidents.filter(i => i.status === 'open');
 
-            if (!openIncidents || openIncidents.length === 0) {
-                container.innerHTML = `
+        if (!openIncidents || openIncidents.length === 0) {
+            container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">✅</div>
                         <p class="empty-title">No Active Incidents</p>
                         <p class="empty-description">There are currently no ongoing incidents.</p>
                     </div>
                 `;
-                return;
-            }
+            return;
+        }
 
-            container.innerHTML = openIncidents.map(incident => `
+        container.innerHTML = openIncidents.map(incident => `
                 <div class="incident-card ${incident.severity}">
                     <div class="incident-header">
                         <div class="incident-title-group">
@@ -615,7 +609,7 @@
                         </div>
                     </div>
                     <div class="incident-description">
-                        ${escapeHtml(incident.description)}
+                        ${escapeHtml(incident.description || '')}
                     </div>
                     <div class="incident-meta">
                         <span class="incident-date">
@@ -627,72 +621,74 @@
                     </div>
                 </div>
             `).join('');
-        }
+    }
 
-        // Helper: Translate status
-        function translateStatus(status) {
-            const translations = {
-                'up': 'Operational',
-                'degraded': 'Degraded',
-                'down': 'Down'
-            };
-            return translations[status] || status;
-        }
+    // Helper: Translate status
+    function translateStatus(status) {
+        const translations = {
+            'up': 'Operational',
+            'degraded': 'Degraded',
+            'down': 'Down'
+        };
+        return translations[status] || status;
+    }
 
-        // Helper: Translate severity
-        function translateSeverity(severity) {
-            const translations = {
-                'critical': 'Critical',
-                'high': 'High',
-                'medium': 'Medium',
-                'low': 'Low'
-            };
-            return translations[severity] || severity;
-        }
+    // Helper: Translate severity
+    function translateSeverity(severity) {
+        const translations = {
+            'critical': 'Critical',
+            'high': 'High',
+            'medium': 'Medium',
+            'low': 'Low'
+        };
+        return translations[severity] || severity;
+    }
 
-        // Helper: Get severity class
-        function getSeverityClass(severity) {
-            const classes = {
-                'critical': 'danger',
-                'high': 'warning',
-                'medium': 'info',
-                'low': 'success'
-            };
-            return classes[severity] || 'secondary';
-        }
+    // Helper: Get severity class
+    function getSeverityClass(severity) {
+        const classes = {
+            'critical': 'danger',
+            'high': 'warning',
+            'medium': 'info',
+            'low': 'success'
+        };
+        return classes[severity] || 'secondary';
+    }
 
-        // Helper: Format relative time
-        function formatRelativeTime(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
+    // Helper: Format relative time
+    function formatRelativeTime(dateString) {
+        if (!dateString) return 'Unknown';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
 
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins} minute(s) ago`;
-            if (diffHours < 24) return `${diffHours} hour(s) ago`;
-            return `${diffDays} day(s) ago`;
-        }
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins} minute(s) ago`;
+        if (diffHours < 24) return `${diffHours} hour(s) ago`;
+        return `${diffDays} day(s) ago`;
+    }
 
-        // Helper: Escape HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+    // Helper: Escape HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-        // Show error
-        function showError() {
-            document.getElementById('loadingState').innerHTML = `
+    // Show error state
+    function showError() {
+        document.getElementById('loadingState').innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">❌</div>
                     <p class="empty-title">Unable to Load Status</p>
                     <p class="empty-description">Please try again later.</p>
                 </div>
             `;
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
