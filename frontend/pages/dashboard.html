@@ -7,6 +7,58 @@
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
+<!-- ==================== Report Incident Modal ==================== -->
+<div id="reportIncidentModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2>🚨 Report New Incident</h2>
+            <button class="close-btn" onclick="closeReportIncidentModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="reportIncidentForm">
+                <div class="form-group">
+                    <label for="incident-service">Service *</label>
+                    <select id="incident-service" required>
+                        <option value="">Select a service</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="incident-title">Title *</label>
+                    <input type="text" id="incident-title" placeholder="e.g., Database Connection Issues" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="incident-description">Description *</label>
+                    <textarea id="incident-description" rows="4" placeholder="Describe the incident in detail..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="incident-severity">Severity *</label>
+                    <select id="incident-severity" required>
+                        <option value="low">🟢 Low</option>
+                        <option value="medium" selected>🟡 Medium</option>
+                        <option value="high">🟠 High</option>
+                        <option value="critical">🔴 Critical</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="incident-published" checked>
+                        Publish to public status page
+                    </label>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeReportIncidentModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">🚨 Report Incident</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <body>
 <!-- Navbar -->
 <nav class="navbar">
@@ -22,6 +74,12 @@
             </a>
             <a href="public-status.html" class="navbar-link">
                 <span>🌐</span> Status Page
+            </a>
+            <a href="admin-users.html"
+               id="adminUsersLink"
+               class="nav-link"
+               style="display:none;">
+                👥 User Management
             </a>
             <div class="navbar-divider"></div>
             <div class="navbar-user">
@@ -49,8 +107,12 @@
                 <button class="btn btn-primary" onclick="window.location.href='service-detail.html?action=create'">
                     <span>➕</span> Add Service
                 </button>
-                <button class="btn btn-secondary" onclick="window.location.href='incident-detail.html?id=${incidentId}'">
-                    <span>🚨</span> Report Incident
+                <button class="btn btn-danger" onclick="openReportModal()">
+                    🚨 Report Incident
+                </button>
+                <!--                <button class="btn btn-secondary"-->
+<!--                        onclick="window.location.href='incident-detail.html?id=1'">-->
+<!--                    <span>🚨</span> Report Incident-->
                 </button>
             </div>
         </div>
@@ -172,6 +234,19 @@
                 Auth.logout();
             }
         });
+        // ==========================================
+        // ADMIN ACCESS CONTROL
+        // ==========================================
+
+        if (Auth.hasRole('admin')) {
+            const adminLink = document.getElementById('adminUsersLink');
+            if (adminLink) {
+                adminLink.style.display = 'inline-block';
+                console.log('✅ Admin link enabled');
+            }
+        } else {
+            console.log('ℹ️ User is not admin, admin link hidden');
+        }
 
         document.getElementById('statusFilter').addEventListener('change', renderServices);
         document.getElementById('incidentStatusFilter').addEventListener('change', renderIncidents);
@@ -399,6 +474,87 @@
         };
         return classes[severity] || 'info';
     }
+</script>
+<script>
+    // باز کردن مودال
+    async function openReportModal() {
+        const modal = document.getElementById('reportIncidentModal');
+        const serviceSelect = document.getElementById('new-incident-service');
+
+        // پاک کردن فرم
+        document.getElementById('reportIncidentForm').reset();
+
+        // بارگذاری سرویس‌ها
+        try {
+            const result = await API.getServices();
+            const services = result.data?.services || [];
+
+            // serviceSelect.innerHTML = '<option value="">یک سرویس انتخاب کنید</option>';
+            services.forEach(service => {
+                const option = document.createElement('option');
+                option.value = service.id;
+                option.textContent = service.name;
+                serviceSelect.appendChild(option);
+            });
+        } catch (error) {
+            // console.error('Error loading services:', error);
+            // alert('خطا در بارگذاری سرویس‌ها');
+        }
+
+        modal.style.display = 'block';
+    }
+
+    // بستن مودال
+    function closeReportModal() {
+        document.getElementById('reportIncidentModal').style.display = 'none';
+    }
+
+    // ایجاد رخداد جدید
+    async function handleCreateIncident(event) {
+        event.preventDefault();
+
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '⏳ در حال ایجاد...';
+
+        const incidentData = {
+            service_id: parseInt(document.getElementById('new-incident-service').value),
+            title: document.getElementById('new-incident-title').value.trim(),
+            description: document.getElementById('new-incident-description').value.trim(),
+            severity: document.getElementById('new-incident-severity').value,
+            is_published: document.getElementById('new-incident-published').checked
+        };
+
+        try {
+            const result = await API.createIncident(incidentData);
+
+            if (result.success) {
+                alert('✅ رخداد با موفقیت ایجاد شد!');
+                closeReportModal();
+
+                // رفرش کردن صفحه
+                await loadIncidents();
+                await loadStats();
+            } else {
+                alert('❌ خطا: ' + (result.message || 'ایجاد رخداد ناموفق بود'));
+            }
+        } catch (error) {
+            console.error('Error creating incident:', error);
+            alert('❌ خطا: ' + (error.message || 'ایجاد رخداد ناموفق بود'));
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+
+    // بستن مودال با کلیک روی پس‌زمینه
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('reportIncidentModal');
+        if (event.target === modal) {
+            closeReportModal();
+        }
+    });
 </script>
 </body>
 </html>

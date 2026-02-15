@@ -12,6 +12,9 @@ import authRoutes from './src/routes/auth.js';
 import serviceRoutes from './src/routes/services.js';
 import incidentRoutes from './src/routes/incidents.js';
 import publicRoutes from './src/routes/public.js';
+import userRoutes from './src/routes/users.js';
+
+
 
 dotenv.config();
 
@@ -70,6 +73,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/public', publicRoutes);
+app.use('/api/users', userRoutes);
+
 
 // ════════════════════════════════════════════════════════════════
 // HEALTH CHECK

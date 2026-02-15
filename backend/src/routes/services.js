@@ -127,7 +127,7 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
 
         // Log audit
         await pool.query(`
-            INSERT INTO audit_logs (user_id, action, resource_type, resource_id)
+            INSERT INTO audit_logs (actor_id, action, entity_type, entity_id)
             VALUES ($1, 'create', 'service', $2)
         `, [userId, result.rows[0].id]);
 
@@ -180,7 +180,7 @@ router.patch('/:id/status', authenticate, authorize('engineer', 'admin'), async 
 
         // Log audit
         await pool.query(`
-            INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details)
+            INSERT INTO audit_logs (actor_id, action, entity_type, entity_id)
             VALUES ($1, 'update_status', 'service', $2, $3)
         `, [userId, id, JSON.stringify({ new_status: status })]);
 
@@ -248,7 +248,7 @@ router.patch('/:id', authenticate, authorize('admin'), async (req, res) => {
 
         // Log audit
         await pool.query(`
-            INSERT INTO audit_logs (user_id, action, resource_type, resource_id)
+            INSERT INTO audit_logs (actor_id, action, entity_type, entity_id)
             VALUES ($1, 'update', 'service', $2)
         `, [userId, id]);
 
@@ -302,7 +302,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 
         // Log audit
         await pool.query(`
-            INSERT INTO audit_logs (user_id, action, resource_type, resource_id)
+            INSERT INTO audit_logs (actor_id, action, entity_type, entity_id)
             VALUES ($1, 'delete', 'service', $2)
         `, [userId, id]);
 

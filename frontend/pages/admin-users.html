@@ -1,246 +1,425 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدیریت کاربران - TraceRouteX</title>
+    <title>User Management - TraceRouteX</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <a href="dashboard.html">
-                    <span class="logo-icon">🌐</span>
-                    <span class="logo-text">TraceRouteX</span>
-                </a>
+<!-- ==========================================
+     NAVIGATION BAR
+     ========================================== -->
+<nav class="navbar">
+    <div class="navbar-container">
+        <div class="nav-brand">
+            <a href="dashboard.html">
+                <span class="logo-icon">🌐</span>
+                <span class="logo-text">TraceRouteX</span>
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-link">📊 Dashboard</a>
+            <a href="admin-users.html" class="nav-link active">👥 User Management</a>
+            <a href="public-status.html" class="nav-link">🌐 Public Status</a>
+            <button class="btn-logout" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<!-- ==========================================
+     MAIN CONTENT
+     ========================================== -->
+<main class="container">
+    <!-- Page Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="page-title">👥 User Management</h1>
+            <p class="page-description">Manage system users, roles and permissions</p>
+        </div>
+        <button id="createUserBtn" class="btn btn-primary">
+            <span>➕</span>
+            Create User
+        </button>
+    </div>
+
+    <!-- ==========================================
+         USERS TABLE CARD
+         ========================================== -->
+    <div class="card">
+        <div class="card-header">
+            <div class="section-header">
+                <h2>User List</h2>
+                <p class="section-subtitle">All registered users in the system</p>
             </div>
-            <div class="nav-menu">
-                <a href="dashboard.html" class="nav-link">داشبورد</a>
-                <a href="admin-users.html" class="nav-link active">مدیریت کاربران</a>
-                <button id="logoutBtn" class="btn btn-danger btn-sm">خروج</button>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input
+                        type="text"
+                        id="searchInput"
+                        class="form-control"
+                        placeholder="Search users...">
             </div>
         </div>
-    </nav>
 
-    <!-- Main Content -->
-    <main class="main-container">
-        <div class="dashboard-header">
-            <div>
-                <h1>مدیریت کاربران</h1>
-                <p class="text-muted">مدیریت کاربران و نقش‌های سیستم</p>
+        <div class="card-body">
+            <!-- Loading State -->
+            <div id="loadingUsers" class="loading-state">
+                <div class="spinner"></div>
+                <p>Loading users from database...</p>
             </div>
-            <button id="createUserBtn" class="btn btn-primary">
-                <span>➕</span>
-                کاربر جدید
-            </button>
-        </div>
 
-        <!-- Users Table -->
-        <div class="card">
-            <div class="card-header">
-                <h3>لیست کاربران</h3>
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="جستجو در کاربران...">
-                </div>
-            </div>
-            <div class="card-body">
-                <div id="loadingUsers" class="loading-state">
-                    <div class="spinner"></div>
-                    <p>در حال بارگذاری کاربران...</p>
-                </div>
-                <div id="usersTableContainer" style="display: none;">
+            <!-- Users Table -->
+            <div id="usersTableContainer" style="display: none;">
+                <div class="table-responsive">
                     <table class="data-table">
                         <thead>
-                            <tr>
-                                <th>شناسه</th>
-                                <th>نام کاربری</th>
-                                <th>ایمیل</th>
-                                <th>نقش</th>
-                                <th>تاریخ ثبت‌نام</th>
-                                <th>عملیات</th>
-                            </tr>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
                         </thead>
                         <tbody id="usersTableBody">
-                            <!-- Populated by JS -->
+                        <!-- Populated by JavaScript -->
                         </tbody>
                     </table>
                 </div>
-                <div id="emptyState" class="empty-state" style="display: none;">
-                    <span class="empty-icon">👥</span>
-                    <h3>کاربری یافت نشد</h3>
-                    <p>هنوز کاربری در سیستم ثبت نشده است.</p>
-                </div>
             </div>
-        </div>
-    </main>
 
-    <!-- Create/Edit User Modal -->
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle">کاربر جدید</h2>
-                <button class="modal-close" id="closeModalBtn">&times;</button>
-            </div>
-            <form id="userForm">
-                <input type="hidden" id="userId">
-                
-                <div class="form-group">
-                    <label for="username">نام کاربری *</label>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        class="form-control" 
-                        required 
-                        minlength="3"
-                        maxlength="50"
-                        placeholder="username">
-                    <small class="form-text">حداقل 3 کاراکتر، فقط حروف انگلیسی، اعداد و _ </small>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">ایمیل *</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        class="form-control" 
-                        required
-                        placeholder="user@example.com">
-                </div>
-
-                <div class="form-group" id="passwordGroup">
-                    <label for="password">رمز عبور *</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        class="form-control" 
-                        minlength="6"
-                        placeholder="حداقل 6 کاراکتر">
-                    <small class="form-text">در حالت ویرایش، خالی بگذارید تا رمز تغییر نکند</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="role">نقش کاربر *</label>
-                    <select id="role" class="form-control" required>
-                        <option value="">انتخاب کنید...</option>
-                        <option value="viewer">Viewer - مشاهده‌گر</option>
-                        <option value="engineer">Engineer - مهندس</option>
-                        <option value="admin">Admin - مدیر</option>
-                    </select>
-                    <small class="form-text">
-                        <strong>Viewer:</strong> فقط مشاهده | 
-                        <strong>Engineer:</strong> ایجاد/ویرایش رخدادها | 
-                        <strong>Admin:</strong> دسترسی کامل
-                    </small>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" id="cancelBtn">انصراف</button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                        <span id="submitBtnText">ذخیره</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content modal-sm">
-            <div class="modal-header">
-                <h2>تایید حذف</h2>
-                <button class="modal-close" id="closeDeleteModalBtn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>آیا از حذف کاربر <strong id="deleteUsername"></strong> اطمینان دارید؟</p>
-                <p class="text-danger">این عملیات قابل بازگشت نیست!</p>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">انصراف</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <span id="deleteBtnText">حذف کاربر</span>
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">👥</div>
+                <h3>No Users Found</h3>
+                <p>No users have been registered in the system yet.</p>
+                <button class="btn btn-primary" onclick="openCreateModal()">
+                    Create First User
                 </button>
             </div>
         </div>
     </div>
+</main>
 
-    <script src="../assets/js/utils.js"></script>
-    <script src="../assets/js/auth.js"></script>
-    <script src="../assets/js/api.js"></script>
-    <script>
-        // State
-        let allUsers = [];
-        let editingUserId = null;
-        let deletingUserId = null;
-        let currentUser = null;
+<!-- ==========================================
+     CREATE/EDIT USER MODAL
+     ========================================== -->
+<div id="userModal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modalTitle">Create User</h2>
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+        </div>
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Check admin authentication
-            currentUser = await checkAuth(['admin']);
-            
-            if (!currentUser) {
+        <form id="userForm">
+            <div class="modal-body">
+                <input type="hidden" id="userId">
+                <input type="hidden" id="isEditMode" value="false">
+
+                <div class="form-group">
+                    <label for="username">Username *</label>
+                    <input
+                            type="text"
+                            id="username"
+                            class="form-control"
+                            required
+                            minlength="3"
+                            maxlength="50"
+                            pattern="[a-zA-Z0-9_]+"
+                            placeholder="e.g., john_doe">
+                    <small class="form-text">Minimum 3 characters (only letters, numbers and _)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input
+                            type="email"
+                            id="email"
+                            class="form-control"
+                            required
+                            placeholder="user@example.com">
+                </div>
+
+                <div class="form-group" id="passwordGroup">
+                    <label for="password">Password *</label>
+                    <input
+                            type="password"
+                            id="password"
+                            class="form-control"
+                            minlength="6"
+                            placeholder="Minimum 6 characters">
+                    <small class="form-text" id="passwordHelp" style="display: none;">Leave empty to keep current password</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="role">User Role *</label>
+                    <select id="role" class="form-control" required>
+                        <option value="">Select role...</option>
+                        <option value="viewer">👁️ Viewer - Read Only</option>
+                        <option value="engineer">🔧 Engineer - Manage Incidents</option>
+                        <option value="admin">👑 Admin - Full Access</option>
+                    </select>
+                    <small class="form-text">
+                        <strong>Viewer:</strong> Read only |
+                        <strong>Engineer:</strong> Manage incidents |
+                        <strong>Admin:</strong> Full access
+                    </small>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span id="submitBtnText">Create User</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==========================================
+     DELETE CONFIRMATION MODAL
+     ========================================== -->
+<div id="deleteModal" class="modal-overlay" style="display: none;">
+    <div class="modal modal-sm">
+        <div class="modal-header">
+            <h2 class="modal-title">Confirm Deletion</h2>
+            <button class="modal-close" id="closeDeleteModalBtn">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="alert alert-warning">
+                <strong>⚠️ Warning</strong>
+                <p>Are you sure you want to delete user <strong id="deleteUsername"></strong>?</p>
+                <p class="text-danger">This action cannot be undone!</p>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                <span id="deleteBtnText">Delete User</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     JAVASCRIPT - DIRECT DATABASE ACCESS
+     ========================================== -->
+<script src="../assets/js/utils.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+    // ==========================================
+    // CONFIGURATION
+    // ==========================================
+    const API_BASE_URL = 'http://localhost:3000';
+
+    // ==========================================
+    // STATE MANAGEMENT
+    // ==========================================
+    let allUsers = [];
+    let editingUserId = null;
+    let deletingUserId = null;
+    let currentUser = null;
+
+    // ==========================================
+    // DIRECT DATABASE API CALLS (NO api.js)
+    // ==========================================
+    const DirectAPI = {
+        async getUsers() {
+            const response = await fetch(`${API_BASE_URL}/api/users`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to fetch users');
+            }
+
+            const result = await response.json();
+            console.log('📥 Raw database response:', result);
+
+            // Handle different response formats
+            if (Array.isArray(result)) {
+                return result; // Direct array
+            } else if (result.success && result.data) {
+                if (Array.isArray(result.data.users)) {
+                    return result.data.users;
+                } else if (Array.isArray(result.data)) {
+                    return result.data;
+                }
+            } else if (Array.isArray(result.users)) {
+                return result.users;
+            }
+
+            return [];
+        },
+
+        async createUser(userData) {
+            const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to create user');
+            }
+
+            return await response.json();
+        },
+
+        async updateUser(userId, userData) {
+            const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to update user');
+            }
+
+            return await response.json();
+        },
+
+        async deleteUser(userId) {
+            const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to delete user');
+            }
+
+            return await response.json();
+        }
+    };
+
+    // ==========================================
+    // INITIALIZATION
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log('🚀 Admin Users page initializing (Direct DB Mode)...');
+
+        try {
+            // Check authentication
+            if (!Auth.isLoggedIn()) {
+                console.warn('⚠️ User not logged in, redirecting...');
                 window.location.href = 'login.html';
+                return;
+            }
+
+            // Check admin role
+            currentUser = Auth.getUser();
+            if (!currentUser || currentUser.role !== 'admin') {
+                console.warn('⚠️ User is not admin, redirecting...');
+                showToast('You do not have access to this section', 'error');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
                 return;
             }
 
             await loadUsers();
             initializeEventListeners();
-        });
 
-        // Load all users
-        async function loadUsers() {
-            try {
-                showLoading(true);
-                allUsers = await API.getUsers();
+            console.log('✅ Admin Users page loaded successfully');
+        } catch (error) {
+            console.error('❌ Initialization error:', error);
+            showToast('Error loading page: ' + error.message, 'error');
+        }
+    });
+
+    // ==========================================
+    // LOAD USERS FROM DATABASE
+    // ==========================================
+    async function loadUsers() {
+        try {
+            showLoading(true);
+            console.log('📥 Fetching users directly from database...');
+
+            const users = await DirectAPI.getUsers();
+
+            allUsers = users || [];
+            console.log(`✅ Loaded ${allUsers.length} users from database:`, allUsers);
+
+            if (allUsers.length > 0) {
                 renderUsers(allUsers);
-            } catch (error) {
-                console.error('Error loading users:', error);
-                showToast('خطا در بارگذاری کاربران: ' + error.message, 'error');
+            } else {
                 showEmptyState();
-            } finally {
-                showLoading(false);
             }
+        } catch (error) {
+            console.error('❌ Error loading users from database:', error);
+            showToast('Error loading users: ' + error.message, 'error');
+            showEmptyState();
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ==========================================
+    // RENDER USERS TABLE
+    // ==========================================
+    function renderUsers(users) {
+        const tbody = document.getElementById('usersTableBody');
+
+        if (!users || users.length === 0) {
+            showEmptyState();
+            return;
         }
 
-        // Render users table
-        function renderUsers(users) {
-            const tbody = document.getElementById('usersTableBody');
-            
-            if (!users || users.length === 0) {
-                showEmptyState();
-                return;
-            }
-
-            tbody.innerHTML = users.map(user => `
+        tbody.innerHTML = users.map(user => `
                 <tr>
-                    <td>${user.id}</td>
+                    <td><span class="text-mono">#${user.id}</span></td>
                     <td>
-                        <strong>${escapeHtml(user.username)}</strong>
-                        ${user.id === currentUser.id ? '<span class="badge badge-info">شما</span>' : ''}
+                        <div class="user-cell">
+                            <strong>${escapeHtml(user.username)}</strong>
+                            ${user.id === currentUser.id ? '<span class="badge badge-info">You</span>' : ''}
+                        </div>
                     </td>
-                    <td>${escapeHtml(user.email)}</td>
+                    <td class="text-secondary">${escapeHtml(user.email)}</td>
                     <td>
                         <span class="badge badge-${getRoleBadgeClass(user.role)}">
-                            ${getRoleLabel(user.role)}
+                            ${getRoleIcon(user.role)} ${getRoleLabel(user.role)}
                         </span>
                     </td>
-                    <td>${formatDate(user.created_at)}</td>
+                    <td class="text-secondary">${formatDate(user.created_at)}</td>
                     <td>
                         <div class="action-buttons">
-                            <button 
-                                class="btn btn-sm btn-primary" 
+                            <button
+                                class="btn btn-sm btn-primary"
                                 onclick="openEditModal(${user.id})"
-                                ${user.id === currentUser.id ? 'title="ویرایش پروفایل خود"' : ''}>
-                                ✏️ ویرایش
+                                title="${user.id === currentUser.id ? 'Edit Profile' : 'Edit User'}">
+                                ✏️ Edit
                             </button>
                             ${user.id !== currentUser.id ? `
-                                <button 
-                                    class="btn btn-sm btn-danger" 
-                                    onclick="openDeleteModal(${user.id})">
-                                    🗑️ حذف
+                                <button
+                                    class="btn btn-sm btn-danger"
+                                    onclick="openDeleteModal(${user.id})"
+                                    title="Delete User">
+                                    🗑️ Delete
                                 </button>
                             ` : ''}
                         </div>
@@ -248,248 +427,527 @@
                 </tr>
             `).join('');
 
-            document.getElementById('usersTableContainer').style.display = 'block';
-            document.getElementById('emptyState').style.display = 'none';
-        }
+        document.getElementById('usersTableContainer').style.display = 'block';
+        document.getElementById('emptyState').style.display = 'none';
+    }
 
-        // Show/hide loading
-        function showLoading(show) {
-            document.getElementById('loadingUsers').style.display = show ? 'flex' : 'none';
-            document.getElementById('usersTableContainer').style.display = show ? 'none' : 'block';
-        }
+    // ==========================================
+    // LOADING STATE
+    // ==========================================
+    function showLoading(show) {
+        document.getElementById('loadingUsers').style.display = show ? 'flex' : 'none';
+        document.getElementById('usersTableContainer').style.display = show ? 'none' : 'block';
+    }
 
-        // Show empty state
-        function showEmptyState() {
-            document.getElementById('usersTableContainer').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'block';
-        }
+    // ==========================================
+    // EMPTY STATE
+    // ==========================================
+    function showEmptyState() {
+        document.getElementById('usersTableContainer').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'flex';
+    }
 
-        // Initialize event listeners
-        function initializeEventListeners() {
-            // Create user button
-            document.getElementById('createUserBtn').addEventListener('click', openCreateModal);
+    // ==========================================
+    // EVENT LISTENERS
+    // ==========================================
+    function initializeEventListeners() {
+        // Create user button
+        document.getElementById('createUserBtn').addEventListener('click', openCreateModal);
 
-            // Modal controls
-            document.getElementById('closeModalBtn').addEventListener('click', closeUserModal);
-            document.getElementById('cancelBtn').addEventListener('click', closeUserModal);
-            document.getElementById('userForm').addEventListener('submit', handleUserSubmit);
+        // User modal controls
+        document.getElementById('closeModalBtn').addEventListener('click', closeUserModal);
+        document.getElementById('cancelBtn').addEventListener('click', closeUserModal);
+        document.getElementById('userForm').addEventListener('submit', handleUserSubmit);
 
-            // Delete modal controls
-            document.getElementById('closeDeleteModalBtn').addEventListener('click', closeDeleteModal);
-            document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
-            document.getElementById('confirmDeleteBtn').addEventListener('click', handleUserDelete);
+        // Delete modal controls
+        document.getElementById('closeDeleteModalBtn').addEventListener('click', closeDeleteModal);
+        document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
+        document.getElementById('confirmDeleteBtn').addEventListener('click', handleUserDelete);
 
-            // Search
-            document.getElementById('searchInput').addEventListener('input', handleSearch);
+        // Search
+        document.getElementById('searchInput').addEventListener('input', handleSearch);
 
-            // Logout
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                logout();
-                window.location.href = 'login.html';
-            });
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            Auth.logout();
+        });
 
-            // Close modals on outside click
-            window.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal')) {
-                    closeUserModal();
-                    closeDeleteModal();
-                }
-            });
-        }
+        // Close modals on outside click
+        window.addEventListener('click', (e) => {
+            const userModal = document.getElementById('userModal');
+            const deleteModal = document.getElementById('deleteModal');
 
-        // Open create modal
-        function openCreateModal() {
-            editingUserId = null;
-            document.getElementById('modalTitle').textContent = 'کاربر جدید';
-            document.getElementById('userForm').reset();
-            document.getElementById('userId').value = '';
-            document.getElementById('password').required = true;
-            document.getElementById('passwordGroup').querySelector('small').style.display = 'none';
-            document.getElementById('submitBtnText').textContent = 'ایجاد کاربر';
-            document.getElementById('userModal').classList.add('active');
-        }
-
-        // Open edit modal
-        async function openEditModal(userId) {
-            try {
-                editingUserId = userId;
-                const user = allUsers.find(u => u.id === userId);
-                
-                if (!user) {
-                    showToast('کاربر یافت نشد', 'error');
-                    return;
-                }
-
-                document.getElementById('modalTitle').textContent = 'ویرایش کاربر';
-                document.getElementById('userId').value = user.id;
-                document.getElementById('username').value = user.username;
-                document.getElementById('email').value = user.email;
-                document.getElementById('role').value = user.role;
-                document.getElementById('password').value = '';
-                document.getElementById('password').required = false;
-                document.getElementById('passwordGroup').querySelector('small').style.display = 'block';
-                document.getElementById('submitBtnText').textContent = 'ذخیره تغییرات';
-                document.getElementById('userModal').classList.add('active');
-            } catch (error) {
-                showToast('خطا در بارگذاری اطلاعات کاربر', 'error');
-            }
-        }
-
-        // Close user modal
-        function closeUserModal() {
-            document.getElementById('userModal').classList.remove('active');
-            document.getElementById('userForm').reset();
-            editingUserId = null;
-        }
-
-        // Handle user form submit
-        async function handleUserSubmit(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const submitBtnText = document.getElementById('submitBtnText');
-            const originalText = submitBtnText.textContent;
-
-            try {
-                submitBtn.disabled = true;
-                submitBtnText.textContent = 'در حال ذخیره...';
-
-                const formData = {
-                    username: document.getElementById('username').value.trim(),
-                    email: document.getElementById('email').value.trim(),
-                    role: document.getElementById('role').value
-                };
-
-                // Validate username (only letters, numbers, underscore)
-                if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-                    showToast('نام کاربری فقط می‌تواند شامل حروف انگلیسی، اعداد و _ باشد', 'error');
-                    return;
-                }
-
-                // Add password only if provided
-                const password = document.getElementById('password').value;
-                if (password) {
-                    if (password.length < 6) {
-                        showToast('رمز عبور باید حداقل 6 کاراکتر باشد', 'error');
-                        return;
-                    }
-                    formData.password = password;
-                } else if (!editingUserId) {
-                    showToast('رمز عبور الزامی است', 'error');
-                    return;
-                }
-
-                if (editingUserId) {
-                    // Update existing user
-                    await API.updateUser(editingUserId, formData);
-                    showToast('کاربر با موفقیت ویرایش شد', 'success');
-                } else {
-                    // Create new user
-                    await API.createUser(formData);
-                    showToast('کاربر با موفقیت ایجاد شد', 'success');
-                }
-
+            if (e.target === userModal) {
                 closeUserModal();
-                await loadUsers();
-
-            } catch (error) {
-                console.error('Error saving user:', error);
-                showToast('خطا: ' + error.message, 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtnText.textContent = originalText;
             }
-        }
-
-        // Open delete modal
-        function openDeleteModal(userId) {
-            deletingUserId = userId;
-            const user = allUsers.find(u => u.id === userId);
-            
-            if (!user) {
-                showToast('کاربر یافت نشد', 'error');
-                return;
-            }
-
-            document.getElementById('deleteUsername').textContent = user.username;
-            document.getElementById('deleteModal').classList.add('active');
-        }
-
-        // Close delete modal
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.remove('active');
-            deletingUserId = null;
-        }
-
-        // Handle user delete
-        async function handleUserDelete() {
-            const deleteBtn = document.getElementById('confirmDeleteBtn');
-            const deleteBtnText = document.getElementById('deleteBtnText');
-            const originalText = deleteBtnText.textContent;
-
-            try {
-                deleteBtn.disabled = true;
-                deleteBtnText.textContent = 'در حال حذف...';
-
-                await API.deleteUser(deletingUserId);
-                showToast('کاربر با موفقیت حذف شد', 'success');
-                
+            if (e.target === deleteModal) {
                 closeDeleteModal();
-                await loadUsers();
-
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                showToast('خطا در حذف کاربر: ' + error.message, 'error');
-            } finally {
-                deleteBtn.disabled = false;
-                deleteBtnText.textContent = originalText;
             }
-        }
+        });
+    }
 
-        // Handle search
-        function handleSearch(e) {
-            const searchTerm = e.target.value.toLowerCase().trim();
-            
-            if (!searchTerm) {
-                renderUsers(allUsers);
+    // ==========================================
+    // MODAL: OPEN CREATE
+    // ==========================================
+    function openCreateModal() {
+        editingUserId = null;
+        document.getElementById('modalTitle').textContent = '➕ Create User';
+        document.getElementById('userForm').reset();
+        document.getElementById('userId').value = '';
+        document.getElementById('isEditMode').value = 'false';
+        document.getElementById('password').required = true;
+        document.getElementById('passwordHelp').style.display = 'none';
+        document.getElementById('submitBtnText').textContent = 'Create User';
+        document.getElementById('userModal').style.display = 'flex';
+    }
+
+    // ==========================================
+    // MODAL: OPEN EDIT
+    // ==========================================
+    async function openEditModal(userId) {
+        try {
+            editingUserId = userId;
+            const user = allUsers.find(u => u.id === userId);
+
+            if (!user) {
+                showToast('User not found', 'error');
                 return;
             }
 
-            const filtered = allUsers.filter(user => 
-                user.username.toLowerCase().includes(searchTerm) ||
-                user.email.toLowerCase().includes(searchTerm) ||
-                getRoleLabel(user.role).includes(searchTerm)
-            );
-
-            renderUsers(filtered);
+            document.getElementById('modalTitle').textContent = '✏️ Edit User';
+            document.getElementById('userId').value = user.id;
+            document.getElementById('isEditMode').value = 'true';
+            document.getElementById('username').value = user.username;
+            document.getElementById('email').value = user.email;
+            document.getElementById('role').value = user.role;
+            document.getElementById('password').value = '';
+            document.getElementById('password').required = false;
+            document.getElementById('passwordHelp').style.display = 'block';
+            document.getElementById('submitBtnText').textContent = 'Save Changes';
+            document.getElementById('userModal').style.display = 'flex';
+        } catch (error) {
+            showToast('Error loading user data', 'error');
         }
+    }
 
-        // Helper: Get role badge class
-        function getRoleBadgeClass(role) {
-            const classes = {
-                'admin': 'danger',
-                'engineer': 'warning',
-                'viewer': 'info'
+    // ==========================================
+    // MODAL: CLOSE USER
+    // ==========================================
+    function closeUserModal() {
+        document.getElementById('userModal').style.display = 'none';
+        document.getElementById('userForm').reset();
+        editingUserId = null;
+    }
+
+    // ==========================================
+    // FORM: SUBMIT USER (CREATE/UPDATE)
+    // ==========================================
+    async function handleUserSubmit(e) {
+        e.preventDefault();
+
+        const submitBtn = document.getElementById('submitBtn');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const originalText = submitBtnText.textContent;
+        const isEditMode = document.getElementById('isEditMode').value === 'true';
+
+        try {
+            submitBtn.disabled = true;
+            submitBtnText.textContent = '⏳ Saving...';
+
+            const formData = {
+                username: document.getElementById('username').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                role: document.getElementById('role').value
             };
-            return classes[role] || 'secondary';
+
+            // Validate username (only letters, numbers, underscore)
+            if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+                showToast('Username can only contain letters, numbers and _', 'error');
+                return;
+            }
+
+            // Add password only if provided
+            const password = document.getElementById('password').value;
+            if (password) {
+                if (password.length < 6) {
+                    showToast('Password must be at least 6 characters', 'error');
+                    return;
+                }
+                formData.password = password;
+            } else if (!isEditMode) {
+                showToast('Password is required', 'error');
+                return;
+            }
+
+            if (isEditMode && editingUserId) {
+                // Update existing user
+                console.log('🔄 Updating user in database:', editingUserId, formData);
+                await DirectAPI.updateUser(editingUserId, formData);
+                showToast('✅ User updated successfully', 'success');
+            } else {
+                // Create new user
+                console.log('➕ Creating new user in database:', formData);
+                await DirectAPI.createUser(formData);
+                showToast('✅ User created successfully', 'success');
+            }
+
+            closeUserModal();
+            await loadUsers();
+
+        } catch (error) {
+            console.error('❌ Error saving user:', error);
+            showToast('❌ Error: ' + error.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtnText.textContent = originalText;
+        }
+    }
+
+    // ==========================================
+    // MODAL: OPEN DELETE
+    // ==========================================
+    function openDeleteModal(userId) {
+        deletingUserId = userId;
+        const user = allUsers.find(u => u.id === userId);
+
+        if (!user) {
+            showToast('User not found', 'error');
+            return;
         }
 
-        // Helper: Get role label
-        function getRoleLabel(role) {
-            const labels = {
-                'admin': 'مدیر',
-                'engineer': 'مهندس',
-                'viewer': 'مشاهده‌گر'
-            };
-            return labels[role] || role;
+        if (user.id === currentUser.id) {
+            showToast('You cannot delete yourself!', 'error');
+            return;
         }
 
-        // Helper: Escape HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        document.getElementById('deleteUsername').textContent = user.username;
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    // ==========================================
+    // MODAL: CLOSE DELETE
+    // ==========================================
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        deletingUserId = null;
+    }
+
+    // ==========================================
+    // HANDLE DELETE
+    // ==========================================
+    async function handleUserDelete() {
+        const deleteBtn = document.getElementById('confirmDeleteBtn');
+        const deleteBtnText = document.getElementById('deleteBtnText');
+        const originalText = deleteBtnText.textContent;
+
+        try {
+            deleteBtn.disabled = true;
+            deleteBtnText.textContent = '⏳ Deleting...';
+
+            console.log('🗑️ Deleting user from database:', deletingUserId);
+            await DirectAPI.deleteUser(deletingUserId);
+            showToast('✅ User deleted successfully', 'success');
+
+            closeDeleteModal();
+            await loadUsers();
+
+        } catch (error) {
+            console.error('❌ Error deleting user:', error);
+            showToast('❌ Error deleting user: ' + error.message, 'error');
+        } finally {
+            deleteBtn.disabled = false;
+            deleteBtnText.textContent = originalText;
         }
-    </script>
+    }
+
+    // ==========================================
+    // SEARCH HANDLER
+    // ==========================================
+    function handleSearch(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+
+        if (!searchTerm) {
+            renderUsers(allUsers);
+            return;
+        }
+
+        const filtered = allUsers.filter(user =>
+            user.username.toLowerCase().includes(searchTerm) ||
+            user.email.toLowerCase().includes(searchTerm) ||
+            getRoleLabel(user.role).toLowerCase().includes(searchTerm)
+        );
+
+        renderUsers(filtered);
+    }
+
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+
+    function getRoleBadgeClass(role) {
+        const classes = {
+            'admin': 'danger',
+            'engineer': 'warning',
+            'viewer': 'info'
+        };
+        return classes[role] || 'secondary';
+    }
+
+    function getRoleLabel(role) {
+        const labels = {
+            'admin': 'Admin',
+            'engineer': 'Engineer',
+            'viewer': 'Viewer'
+        };
+        return labels[role] || role;
+    }
+
+    function getRoleIcon(role) {
+        const icons = {
+            'admin': '👑',
+            'engineer': '🔧',
+            'viewer': '👁️'
+        };
+        return icons[role] || '👤';
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+
+        try {
+            const date = new Date(dateString);
+            return new Intl.DateTimeFormat('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(date);
+        } catch (error) {
+            return dateString;
+        }
+    }
+
+    function showToast(message, type = 'info') {
+        // Use Utils.showAlert if available
+        if (typeof Utils !== 'undefined' && Utils.showAlert) {
+            Utils.showAlert(message, type);
+        } else {
+            // Fallback to console + alert
+            console.log(`[${type.toUpperCase()}] ${message}`);
+
+            // Better visual feedback
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 1rem 1.5rem;
+                    background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                    color: white;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    z-index: 10000;
+                    animation: slideIn 0.3s ease;
+                `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    }
+</script>
+
+<!-- ==========================================
+     CUSTOM STYLES
+     ========================================== -->
+<style>
+    /* Toast animations */
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    /* Additional styles for user management page */
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .text-mono {
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        color: var(--text-secondary, #6b7280);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-start;
+    }
+
+    .modal-sm {
+        max-width: 450px;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .alert-warning {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        color: #92400e;
+    }
+
+    .alert strong {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .alert p {
+        margin: 0.25rem 0;
+    }
+
+    .text-danger {
+        color: #dc2626;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    /* Loading spinner */
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        gap: 1rem;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e5e7eb;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Empty state */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        text-align: center;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        color: var(--text-primary, #111827);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--text-secondary, #6b7280);
+        margin-bottom: 1.5rem;
+    }
+
+    .text-secondary {
+        color: var(--text-secondary, #6b7280);
+    }
+
+    /* Badge styles */
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .badge-info {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-secondary {
+        background-color: #e5e7eb;
+        color: #4b5563;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .card-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+    }
+</style>
 </body>
 </html>

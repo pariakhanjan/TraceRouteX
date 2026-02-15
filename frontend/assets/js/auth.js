@@ -113,7 +113,6 @@ const Auth = {
     return true;
   },
 
-  // Display user name in Navbar
   displayUserInfo() {
     const user = this.getUser();
     

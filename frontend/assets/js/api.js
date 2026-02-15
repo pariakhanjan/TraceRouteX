@@ -527,6 +527,49 @@ const API = {
         return result;
     },
 
+    async createUser(userData) {
+        if (USE_MOCK) {
+            return this._mockCreateUser(userData);
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/users`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData),
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to create user');
+        }
+
+        return result; // { success: true, data: { user }, message: "..." }
+    },
+
+    _mockCreateUser(userData) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    success: true,
+                    data: {
+                        user: {
+                            id: Date.now(),
+                            username: userData.username,
+                            email: userData.email,
+                            role: userData.role || 'viewer',
+                            created_at: new Date().toISOString()
+                        }
+                    },
+                    message: 'User created successfully'
+                });
+            }, 300);
+        });
+    },
+
     async getUserById(id) {
         if (USE_MOCK) {
             return this._mockGetUserById(id);
